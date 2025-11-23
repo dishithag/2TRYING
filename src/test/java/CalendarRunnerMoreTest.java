@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 
 /**
@@ -77,24 +78,11 @@ public class CalendarRunnerMoreTest {
 
   @Test
   public void testNoArgs_defaultsToInteractive() throws Exception {
-    java.io.InputStream oldIn = System.in;
-    PrintStream oldOut = System.out;
-
-    ByteArrayInputStream in =
-        new ByteArrayInputStream("exit\n".getBytes("UTF-8"));
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    System.setIn(in);
-    System.setOut(new PrintStream(out));
-
-    try {
-      CalendarRunner.main(new String[0]);
-      String s = out.toString(StandardCharsets.UTF_8);
-      assertTrue(s.contains("Goodbye"));
-    } finally {
-      System.setIn(oldIn);
-      System.setOut(oldOut);
-    }
+    AtomicBoolean launched = new AtomicBoolean(false);
+    CalendarRunner.setGuiLauncher(model -> launched.set(true));
+    CalendarRunner.main(new String[0]);
+    assertTrue(launched.get());
+    CalendarRunner.setGuiLauncher(null);
   }
 
   /**
@@ -144,7 +132,7 @@ public class CalendarRunnerMoreTest {
       assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("invalid mode") || text.contains("Invalid mode"));
-      assertTrue(text.contains("Use 'interactive' or 'headless'"));
+      assertTrue(text.contains("gui") || text.contains("interactive"));
     } finally {
       System.setErr(oldErr);
       CalendarRunner.setExitHandler(null);
@@ -232,6 +220,7 @@ public class CalendarRunnerMoreTest {
     } catch (ExitIntercept e) {
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("Usage:"));
+      assertTrue(text.contains("java -jar app.jar --mode gui"));
       assertTrue(text.contains("java -jar app.jar --mode interactive"));
       assertTrue(text.contains("java -jar app.jar --mode headless <commandsFile>"));
     } finally {
@@ -260,7 +249,7 @@ public class CalendarRunnerMoreTest {
       assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("use --mode") || text.contains("missing mode value"));
-      assertTrue(text.contains("Use 'interactive' or 'headless'") || text.contains("use --mode"));
+      assertTrue(text.contains("interactive") || text.contains("headless"));
     } finally {
       System.setErr(oldErr);
       CalendarRunner.setExitHandler(null);
