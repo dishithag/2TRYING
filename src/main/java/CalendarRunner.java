@@ -13,6 +13,8 @@ import java.io.InputStreamReader;
  */
 public class CalendarRunner {
 
+  private static ExitHandler exitHandler = status -> System.exit(status);
+
   /**
    * Runs the calendar application.
    *
@@ -37,7 +39,7 @@ public class CalendarRunner {
     } catch (Exception e) {
       System.err.println("Error: " + e.getMessage());
       e.printStackTrace();
-      System.exit(1);
+      exitHandler.exit(1);
     }
   }
 
@@ -46,7 +48,11 @@ public class CalendarRunner {
     System.err.println("Usage:");
     System.err.println("  java -jar app.jar --mode interactive");
     System.err.println("  java -jar app.jar --mode headless <commandsFile>");
-    System.exit(1);
+    exitHandler.exit(1);
+  }
+
+  static void setExitHandler(ExitHandler handler) {
+    exitHandler = handler == null ? status -> System.exit(status) : handler;
   }
 
   /**

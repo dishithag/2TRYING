@@ -8,7 +8,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.Permission;
 import org.junit.Test;
 
 /**
@@ -16,21 +15,12 @@ import org.junit.Test;
  */
 public class CalendarRunnerMoreTest {
 
-  private static final class ExitCatcher extends SecurityManager {
-    private Integer code;
+  private static final class ExitIntercept extends RuntimeException {
+    private final int status;
 
-    @Override
-    public void checkPermission(Permission perm) {
-    }
-
-    @Override
-    public void checkPermission(Permission perm, Object ctx) {
-    }
-
-    @Override
-    public void checkExit(int status) {
-      this.code = status;
-      throw new SecurityException("exit");
+    private ExitIntercept(int status) {
+      super("exit");
+      this.status = status;
     }
   }
 
@@ -63,25 +53,25 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testHeadlessBadFile_goesToCatchAndExit() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(
           new String[]{"--mode", "headless", "no-such-file.txt"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("Error:"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -112,25 +102,25 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testFirstArgNotMode_printsUsageAndExits() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(new String[]{"--wrong", "interactive"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("first argument must be --mode") || text.contains("use --mode"));
       assertTrue(text.contains("Usage:"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -139,25 +129,25 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testInvalidMode_printsUsageAndExits() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(new String[]{"--mode", "invalid"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("invalid mode") || text.contains("Invalid mode"));
       assertTrue(text.contains("Use 'interactive' or 'headless'"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -166,26 +156,26 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testHeadlessWithoutFile_printsUsageAndExits() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(new String[]{"--mode", "headless"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("headless mode requires a commands file")
           || text.contains("Headless mode requires"));
       assertTrue(text.contains("Usage:") || text.contains("Error:"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -227,26 +217,26 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testPrintUsageAndExit_allBranches() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
 
       CalendarRunner.main(new String[]{"notmode", "interactive"});
       fail("expected exit");
-    } catch (SecurityException e) {
+    } catch (ExitIntercept e) {
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("Usage:"));
       assertTrue(text.contains("java -jar app.jar --mode interactive"));
       assertTrue(text.contains("java -jar app.jar --mode headless <commandsFile>"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -255,25 +245,25 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testMissingModeValue_printsUsageAndExits() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(new String[]{"--mode"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("use --mode") || text.contains("missing mode value"));
       assertTrue(text.contains("Use 'interactive' or 'headless'") || text.contains("use --mode"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
@@ -282,40 +272,37 @@ public class CalendarRunnerMoreTest {
    */
   @Test
   public void testOnlyModeFlag_printsUsageAndExits() throws Exception {
-    SecurityManager oldSm = System.getSecurityManager();
-    ExitCatcher sm = new ExitCatcher();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
     System.setErr(new PrintStream(err));
 
     try {
       CalendarRunner.main(new String[]{"--mode"});
       fail("expected exit");
-    } catch (SecurityException e) {
-      assertEquals(Integer.valueOf(1), sm.code);
+    } catch (ExitIntercept e) {
+      assertEquals(1, e.status);
       String text = err.toString(StandardCharsets.UTF_8);
       assertTrue(text.contains("use --mode") || text.contains("missing mode value"));
     } finally {
       System.setErr(oldErr);
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
     }
   }
 
   @Test
 
   public void testAppModeFrom_null_throws() throws Exception {
-
-    SecurityManager oldSm = System.getSecurityManager();
-
-    ExitCatcher sm = new ExitCatcher();
-
     ByteArrayOutputStream err = new ByteArrayOutputStream();
 
     PrintStream oldErr = System.err;
 
-    System.setSecurityManager(sm);
+    CalendarRunner.setExitHandler(code -> {
+      throw new ExitIntercept(code);
+    });
 
     System.setErr(new PrintStream(err));
 
@@ -325,9 +312,9 @@ public class CalendarRunnerMoreTest {
 
       fail("expected exit");
 
-    } catch (SecurityException e) {
+    } catch (ExitIntercept e) {
 
-      assertEquals(Integer.valueOf(1), sm.code);
+      assertEquals(1, e.status);
 
       String text = err.toString(StandardCharsets.UTF_8);
 
@@ -337,7 +324,7 @@ public class CalendarRunnerMoreTest {
 
       System.setErr(oldErr);
 
-      System.setSecurityManager(oldSm);
+      CalendarRunner.setExitHandler(null);
 
     }
 

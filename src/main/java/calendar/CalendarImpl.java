@@ -93,6 +93,7 @@ public class CalendarImpl implements Calendar {
 
   @Override
   public Event createEvent(String subject, LocalDateTime start, LocalDateTime end) {
+    validateRequiredFields(subject, start);
     if (eventExists(subject, start, end)) {
       throw new IllegalArgumentException(
           "Event with same subject, start, and end already exists");
@@ -115,6 +116,7 @@ public class CalendarImpl implements Calendar {
     if (occurrences <= 0) {
       throw new IllegalArgumentException("Occurrences must be positive");
     }
+    validateRequiredFields(subject, start);
     validateSeriesInstanceShape(start, end, weekdays);
 
     String seriesId = generateSeriesId();
@@ -131,6 +133,7 @@ public class CalendarImpl implements Calendar {
                                             Set<DayOfWeek> weekdays,
                                             LocalDate endDate) {
     validateSeriesInstanceShape(start, end, weekdays);
+    validateRequiredFields(subject, start);
 
     String seriesId = generateSeriesId();
     List<Event> created = createSeries(
@@ -550,6 +553,9 @@ public class CalendarImpl implements Calendar {
   private void validateSeriesInstanceShape(LocalDateTime start,
                                            LocalDateTime end,
                                            Set<DayOfWeek> weekdays) {
+    if (start == null) {
+      throw new IllegalArgumentException("Start date/time required");
+    }
     if (end != null && !start.toLocalDate().equals(end.toLocalDate())) {
       throw new IllegalArgumentException("Event series instances must be single-day");
     }
@@ -567,6 +573,15 @@ public class CalendarImpl implements Calendar {
       throw new IllegalArgumentException("New value required for property " + property);
     }
     return val;
+  }
+
+  private void validateRequiredFields(String subject, LocalDateTime start) {
+    if (subject == null || subject.isBlank()) {
+      throw new IllegalArgumentException("Subject required");
+    }
+    if (start == null) {
+      throw new IllegalArgumentException("Start date/time required");
+    }
   }
 
   private static final class EventKey {

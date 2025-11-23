@@ -341,8 +341,9 @@ public class CalendarImplEdgeTest {
     java.lang.reflect.Field eventsField = CalendarImpl.class.getDeclaredField("events");
     eventsField.setAccessible(true);
     @SuppressWarnings("unchecked")
-    List<Event> eventsList = (List<Event>) eventsField.get(cal);
-    eventsList.add(event);
+    java.util.NavigableSet<Event> eventsSet =
+        (java.util.NavigableSet<Event>) eventsField.get(cal);
+    eventsSet.add(event);
 
     cal.setZoneId(ZoneId.of("America/New_York"));
 

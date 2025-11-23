@@ -241,8 +241,9 @@ public class IcalExportTest {
       java.lang.reflect.Field eventsField = CalendarImpl.class.getDeclaredField("events");
       eventsField.setAccessible(true);
       @SuppressWarnings("unchecked")
-      java.util.List<Event> eventsList = (java.util.List<Event>) eventsField.get(cal);
-      eventsList.add(event);
+      java.util.NavigableSet<Event> eventsSet =
+          (java.util.NavigableSet<Event>) eventsField.get(cal);
+      eventsSet.add(event);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
