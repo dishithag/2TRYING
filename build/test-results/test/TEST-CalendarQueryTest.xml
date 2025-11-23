@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarQueryTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.001">
+  <properties/>
+  <testcase name="testGetEventsInRange" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testFindEvents_endDoesNotMatch_filtered" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testFindEvents_nonNullEnd_noMatches" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testBusyBoundaryAtEnd" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testFindEvents_twoParameters" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testGetEventsInRange_eventEndEqualsRangeStart_excluded" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testFindEvents_nonNullEndMatches" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testIsBusyAtBoundaries" classname="CalendarQueryTest" time="0.0"/>
+  <testcase name="testGetEventsOnDate" classname="CalendarQueryTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

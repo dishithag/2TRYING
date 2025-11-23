@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SeriesIndex.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar</a> &gt; <span class="el_source">SeriesIndex.java</span></div><h1>SeriesIndex.java</h1><pre class="source lang-java linenums">package calendar;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+/**
+ * Index of series occurrences for fast lookup and maintenance.
+ * Keys are series identifiers; values are ordered start-times of occurrences.
+ * This index is rebuildable from the authoritative event list.
+ */
+<span class="fc" id="L17">public final class SeriesIndex {</span>
+
+<span class="fc" id="L19">  private final ConcurrentMap&lt;String, NavigableSet&lt;LocalDateTime&gt;&gt; index =</span>
+      new ConcurrentHashMap&lt;&gt;();
+
+  /**
+   * Clears and rebuilds the index from a list of events.
+   *
+   * @param events source of truth
+   */
+  public void rebuild(List&lt;Event&gt; events) {
+<span class="fc" id="L28">    index.clear();</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">    for (Event e : events) {</span>
+<span class="fc" id="L30">      e.getSeriesId().ifPresent(id -&gt; add(id, e.getStartDateTime()));</span>
+<span class="fc" id="L31">    }</span>
+<span class="fc" id="L32">  }</span>
+
+  /**
+   * Records a new series occurrence.
+   *
+   * @param seriesId series id
+   * @param start start of occurrence
+   */
+  public void add(String seriesId, LocalDateTime start) {
+<span class="fc" id="L41">    Objects.requireNonNull(seriesId, &quot;seriesId&quot;);</span>
+<span class="fc" id="L42">    Objects.requireNonNull(start, &quot;start&quot;);</span>
+<span class="fc" id="L43">    index.computeIfAbsent(seriesId, k -&gt; new TreeSet&lt;&gt;()).add(start);</span>
+<span class="fc" id="L44">  }</span>
+
+  /**
+   * Removes an existing series occurrence.
+   *
+   * @param seriesId series id
+   * @param start start of occurrence
+   */
+  public void remove(String seriesId, LocalDateTime start) {
+<span class="fc" id="L53">    NavigableSet&lt;LocalDateTime&gt; set = index.get(seriesId);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">    if (set != null) {</span>
+<span class="fc" id="L55">      set.remove(start);</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">      if (set.isEmpty()) {</span>
+<span class="fc" id="L57">        index.remove(seriesId);</span>
+      }
+    }
+<span class="fc" id="L60">  }</span>
+
+  /**
+   * Replaces an occurrence start-time within a series.
+   *
+   * @param seriesId series id
+   * @param oldStart old start
+   * @param newStart new start
+   */
+  public void replaceStart(String seriesId, LocalDateTime oldStart, LocalDateTime newStart) {
+<span class="fc" id="L70">    NavigableSet&lt;LocalDateTime&gt; set = index.computeIfAbsent(seriesId, k -&gt; new TreeSet&lt;&gt;());</span>
+<span class="fc" id="L71">    set.remove(oldStart);</span>
+<span class="fc" id="L72">    set.add(newStart);</span>
+<span class="fc" id="L73">  }</span>
+
+  /**
+   * Returns the recorded start-times for a series in ascending order.
+   *
+   * @param seriesId series id
+   * @return ascending list of starts
+   */
+  public List&lt;LocalDateTime&gt; starts(String seriesId) {
+<span class="fc" id="L82">    NavigableSet&lt;LocalDateTime&gt; set = index.get(seriesId);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">    if (set == null) {</span>
+<span class="fc" id="L84">      return new ArrayList&lt;&gt;();</span>
+    }
+<span class="fc" id="L86">    return new ArrayList&lt;&gt;(set);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

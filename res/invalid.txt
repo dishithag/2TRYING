@@ -1,0 +1,8 @@
+create calendar --name Fall --timezone America/New_York
+create calendar --name Fall --timezone America/Los_Angeles
+use calendar --name Fall
+create event "BadFormat" from 2024-09-05 10:00 to 2024-09-05T11:00
+edit calendar --name Fall --property color Blue
+copy event "Nope" on 2024-09-05T10:00 --target Spring to 2025-01-08T10:00
+print events on 2024-13-01
+exit

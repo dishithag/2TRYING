@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarRunnerMoreTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.024">
+  <properties/>
+  <testcase name="testNoArgs_defaultsToInteractive" classname="CalendarRunnerMoreTest" time="0.003"/>
+  <testcase name="testMissingModeValue_printsUsageAndExits" classname="CalendarRunnerMoreTest" time="0.013"/>
+  <testcase name="testHeadlessWithValidFile_runs" classname="CalendarRunnerMoreTest" time="0.003"/>
+  <testcase name="testInvalidMode_printsUsageAndExits" classname="CalendarRunnerMoreTest" time="0.001"/>
+  <testcase name="testPrintUsageAndExit_allBranches" classname="CalendarRunnerMoreTest" time="0.001"/>
+  <testcase name="testHeadlessBadFile_goesToCatchAndExit" classname="CalendarRunnerMoreTest" time="0.001"/>
+  <testcase name="testOnlyModeFlag_printsUsageAndExits" classname="CalendarRunnerMoreTest" time="0.001"/>
+  <testcase name="testFirstArgNotMode_printsUsageAndExits" classname="CalendarRunnerMoreTest" time="0.0"/>
+  <testcase name="testHeadlessWithoutFile_printsUsageAndExits" classname="CalendarRunnerMoreTest" time="0.001"/>
+  <testcase name="testAppModeFrom_null_throws" classname="CalendarRunnerMoreTest" time="0.0"/>
+  <testcase name="testInteractiveModeWithArgs" classname="CalendarRunnerMoreTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

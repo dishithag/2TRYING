@@ -1,0 +1,26 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+calendar,calendar,CalendarProperty,0,24,0,0,0,3,0,1,0,1
+calendar,calendar,WorkingHours,0,9,0,0,0,2,0,1,0,1
+calendar,calendar,EventProperty,5,132,1,15,1,24,1,15,0,3
+calendar,calendar,CalendarImpl,7,1147,6,124,0,266,7,102,1,43
+calendar,calendar,SingleEvent,2,244,1,33,1,50,1,30,0,14
+calendar,calendar,CalendarBookImpl,6,338,1,17,1,79,1,20,0,12
+calendar,calendar,EventBuilder,0,160,0,10,0,40,0,16,0,11
+calendar,calendar,SeriesIndex,0,115,0,8,0,25,0,13,0,9
+calendar,default,CalendarRunner.AppMode,0,53,0,6,0,11,0,5,0,2
+calendar,default,CalendarRunner.AppMode.new CalendarRunner.AppMode() {...},0,27,0,2,0,7,0,3,0,2
+calendar,default,CalendarRunner,11,70,0,8,6,18,1,6,1,2
+calendar,default,CalendarRunner.AppMode.new CalendarRunner.AppMode() {...},0,18,0,0,0,4,0,2,0,2
+calendar,calendar.view,TextCalendarView,0,142,0,10,0,36,0,14,0,9
+calendar,calendar.controller,CalendarContext,0,45,0,4,0,12,0,6,0,4
+calendar,calendar.controller,CommandParser.Command,0,169,0,0,0,48,0,25,0,25
+calendar,calendar.controller,AbstractCalendarController,25,720,5,64,5,184,5,48,0,11
+calendar,calendar.controller,EditScope,0,63,0,6,0,11,0,6,0,2
+calendar,calendar.controller,CommandParser,12,1246,10,140,3,331,9,93,0,24
+calendar,calendar.controller,InteractiveController,5,27,0,0,2,10,1,5,1,5
+calendar,calendar.controller,HeadlessController,0,21,0,0,0,9,0,6,0,6
+calendar,calendar.controller,CommandType,0,154,0,0,0,16,0,1,0,1
+calendar,calendar.controller,CommandParser.Command.Builder,0,114,0,0,0,45,0,22,0,22
+calendar,calendar.util,IcalExport,1,257,1,13,0,61,1,13,0,7
+calendar,calendar.util,CsvExport,0,167,0,22,0,30,0,15,0,4
+calendar,calendar.util,ExportUtil,0,28,0,6,0,6,0,4,0,1

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CalendarRunner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">CalendarRunner.java</span></div><h1>CalendarRunner.java</h1><pre class="source lang-java linenums">import calendar.CalendarBook;
+import calendar.CalendarBookImpl;
+import calendar.controller.CalendarController;
+import calendar.controller.HeadlessController;
+import calendar.controller.InteractiveController;
+import calendar.view.CalendarView;
+import calendar.view.TextCalendarView;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+
+/**
+ * Main entry point for the Calendar application.
+ */
+<span class="nc" id="L14">public class CalendarRunner {</span>
+
+  /**
+   * Runs the calendar application.
+   *
+   * @param args command line arguments
+   */
+  public static void main(String[] args) {
+<span class="fc" id="L22">    CalendarBook model = new CalendarBookImpl();</span>
+<span class="fc" id="L23">    CalendarView view = new TextCalendarView(System.out);</span>
+
+    try {
+<span class="fc bfc" id="L26" title="All 2 branches covered.">      if (args.length == 0) {</span>
+<span class="fc" id="L27">        AppMode.INTERACTIVE.run(model, view, null);</span>
+<span class="fc" id="L28">        return;</span>
+      }
+<span class="fc bfc" id="L30" title="All 4 branches covered.">      if (!&quot;--mode&quot;.equalsIgnoreCase(args[0]) || args.length &lt; 2) {</span>
+<span class="nc" id="L31">        printUsageAndExit(&quot;Error: use --mode &lt;interactive|headless&gt; [commandsFile]&quot;);</span>
+<span class="nc" id="L32">        return;</span>
+      }
+<span class="fc" id="L34">      AppMode mode = AppMode.from(args[1]);</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">      String file = args.length &gt;= 3 ? args[2] : null;</span>
+<span class="fc" id="L36">      mode.run(model, view, file);</span>
+<span class="fc" id="L37">    } catch (Exception e) {</span>
+<span class="fc" id="L38">      System.err.println(&quot;Error: &quot; + e.getMessage());</span>
+<span class="fc" id="L39">      e.printStackTrace();</span>
+<span class="nc" id="L40">      System.exit(1);</span>
+<span class="fc" id="L41">    }</span>
+<span class="fc" id="L42">  }</span>
+
+  private static void printUsageAndExit(String msg) {
+<span class="fc" id="L45">    System.err.println(msg);</span>
+<span class="fc" id="L46">    System.err.println(&quot;Usage:&quot;);</span>
+<span class="fc" id="L47">    System.err.println(&quot;  java -jar app.jar --mode interactive&quot;);</span>
+<span class="fc" id="L48">    System.err.println(&quot;  java -jar app.jar --mode headless &lt;commandsFile&gt;&quot;);</span>
+<span class="nc" id="L49">    System.exit(1);</span>
+<span class="nc" id="L50">  }</span>
+
+  /**
+   * Application modes.
+   */
+<span class="fc" id="L55">  enum AppMode {</span>
+<span class="fc" id="L56">    INTERACTIVE {</span>
+      @Override
+      void run(CalendarBook model, CalendarView view, String file) throws Exception {
+<span class="fc" id="L59">        CalendarController c = new InteractiveController(model, view,</span>
+            new InputStreamReader(System.in));
+<span class="fc" id="L61">        c.run();</span>
+<span class="fc" id="L62">      }</span>
+    },
+<span class="fc" id="L64">    HEADLESS {</span>
+      @Override
+      void run(CalendarBook model, CalendarView view, String file) throws Exception {
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (file == null) {</span>
+<span class="fc" id="L68">          throw new IllegalArgumentException(&quot;Headless mode requires a commands file&quot;);</span>
+        }
+<span class="fc" id="L70">        try (FileReader reader = new FileReader(file)) {</span>
+<span class="fc" id="L71">          CalendarController c = new HeadlessController(model, view, reader);</span>
+<span class="fc" id="L72">          c.run();</span>
+        }
+<span class="fc" id="L74">      }</span>
+    };
+
+    abstract void run(CalendarBook model, CalendarView view, String file) throws Exception;
+
+    static AppMode from(String token) {
+<span class="fc bfc" id="L80" title="All 2 branches covered.">      if (token == null) {</span>
+<span class="fc" id="L81">        throw new IllegalArgumentException(&quot;Mode is required&quot;);</span>
+      }
+<span class="fc" id="L83">      String t = token.trim().toLowerCase();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">      if (&quot;interactive&quot;.equals(t)) {</span>
+<span class="fc" id="L85">        return INTERACTIVE;</span>
+      }
+<span class="fc bfc" id="L87" title="All 2 branches covered.">      if (&quot;headless&quot;.equals(t)) {</span>
+<span class="fc" id="L88">        return HEADLESS;</span>
+      }
+<span class="fc" id="L90">      throw new IllegalArgumentException(&quot;Invalid mode '&quot; + token + &quot;'. Use 'interactive' or&quot;</span>
+          +
+          &quot; 'headless'.&quot;);
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

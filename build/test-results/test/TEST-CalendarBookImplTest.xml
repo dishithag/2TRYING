@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarBookImplTest" tests="25" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.007">
+  <properties/>
+  <testcase name="testChangeTimezone_updates" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEvent_multipleMatches_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testChangeTimezone_convertsExistingEvents" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEventsBetween_convertsTimezones" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEventsBetween_multiDayEvent_partialOverlap_copies" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEventsOnDate_copiesAllFromDay" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEventsBetween_copiesAllInRange" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEventsBetween_acrossTimezones_convertsCorrectly" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testRenameCalendar_duplicateNewName_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCreateCalendar_duplicateName_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEventsBetween_acrossDstBoundary" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testRenameCalendar_notFound_throws" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCreateCalendar_nullZone_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEvent_preservesDuration" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCreateCalendar_nullName_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEvent_noMatch_throws" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEvent_sameCalendar_succeeds" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEvent_preservesAllProperties" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testListCalendarNames_sorted" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEventsOnDate_emptySourceDay_copiesNothing" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testGetCalendar_notFound_throws" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCreateCalendar_invalidTimezone_throws" classname="CalendarBookImplTest" time="0.001"/>
+  <testcase name="testCopyEventsBetween_partialSeriesOverlap_retainsSeriesId" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testRenameCalendar_success" classname="CalendarBookImplTest" time="0.0"/>
+  <testcase name="testCopyEventsBetween_emptyRange_copiesNothing" classname="CalendarBookImplTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventProperty.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar</a> &gt; <span class="el_source">EventProperty.java</span></div><h1>EventProperty.java</h1><pre class="source lang-java linenums">package calendar;
+
+import java.time.LocalDateTime;
+
+/**
+ * Editable properties of an event.
+ */
+<span class="fc" id="L8">public enum EventProperty {</span>
+<span class="fc" id="L9">  SUBJECT,</span>
+<span class="fc" id="L10">  START,</span>
+<span class="fc" id="L11">  END,</span>
+<span class="fc" id="L12">  DESCRIPTION,</span>
+<span class="fc" id="L13">  LOCATION,</span>
+<span class="fc" id="L14">  STATUS;</span>
+
+  /**
+   * Case-insensitive parser for property tokens.
+   *
+   * @param token property name such as &quot;subject&quot;, &quot;start&quot;, &quot;end&quot;
+   * @return matching EventProperty
+   */
+  public static EventProperty fromToken(String token) {
+<span class="fc bfc" id="L23" title="All 2 branches covered.">    if (token == null) {</span>
+<span class="fc" id="L24">      throw new IllegalArgumentException(&quot;Property cannot be null&quot;);</span>
+    }
+<span class="fc bfc" id="L26" title="All 7 branches covered.">    switch (token.trim().toLowerCase()) {</span>
+<span class="fc" id="L27">      case &quot;subject&quot;: return SUBJECT;</span>
+<span class="fc" id="L28">      case &quot;start&quot;: return START;</span>
+<span class="fc" id="L29">      case &quot;end&quot;: return END;</span>
+<span class="fc" id="L30">      case &quot;description&quot;: return DESCRIPTION;</span>
+<span class="fc" id="L31">      case &quot;location&quot;: return LOCATION;</span>
+<span class="fc" id="L32">      case &quot;status&quot;: return STATUS;</span>
+<span class="fc" id="L33">      default: throw new IllegalArgumentException(&quot;Unknown property: &quot; + token);</span>
+    }
+  }
+
+  /**
+   * Applies a string value to the given builder for this property.
+   * For START/END, {@code value} must be an ISO-8601 local date-time
+   * in the form {@code yyyy-MM-dd'T'HH:mm}.
+   *
+   * @param b builder to mutate
+   * @param value new value in string form
+   * @return the same builder for chaining
+   */
+  public EventBuilder apply(EventBuilder b, String value) {
+<span class="pc bpc" id="L47" title="1 of 7 branches missed.">    switch (this) {</span>
+      case SUBJECT:
+<span class="fc" id="L49">        return b.subject(value);</span>
+      case START:
+<span class="fc" id="L51">        return b.startDateTime(LocalDateTime.parse(value));</span>
+      case END:
+<span class="fc" id="L53">        return b.endDateTime(LocalDateTime.parse(value));</span>
+      case DESCRIPTION:
+<span class="fc" id="L55">        return b.description(value);</span>
+      case LOCATION:
+<span class="fc" id="L57">        return b.location(value);</span>
+      case STATUS:
+<span class="fc" id="L59">        return b.isPublic(&quot;public&quot;.equalsIgnoreCase(value));</span>
+      default:
+<span class="nc" id="L61">        throw new IllegalArgumentException(&quot;Unsupported property&quot;);</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

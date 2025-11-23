@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="EventPropertyTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.0">
+  <properties/>
+  <testcase name="testApply_description_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testApply_location_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testApply_start_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testFromToken_allValidTokens" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testApply_end_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testApply_status_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <testcase name="testApply_subject_returnsSameBuilder" classname="EventPropertyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

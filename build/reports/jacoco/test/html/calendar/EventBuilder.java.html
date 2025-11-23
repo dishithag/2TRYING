@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar</a> &gt; <span class="el_source">EventBuilder.java</span></div><h1>EventBuilder.java</h1><pre class="source lang-java linenums">package calendar;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * Fluent builder for {@link Event} instances.
+ * Supports convenient defaults (e.g., all-day using {@link WorkingHours}).
+ */
+<span class="fc" id="L10">public class EventBuilder {</span>
+  private String subject;
+  private LocalDateTime start;
+  private LocalDateTime end;
+<span class="fc" id="L14">  private String description = &quot;&quot;;</span>
+<span class="fc" id="L15">  private String location = &quot;&quot;;</span>
+<span class="fc" id="L16">  private boolean isPublic = true;</span>
+  private String seriesId;
+
+  /**
+   * Sets the event subject.
+   *
+   * @param s subject text
+   * @return this builder
+   */
+  public EventBuilder subject(String s) {
+<span class="fc" id="L26">    this.subject = s;</span>
+<span class="fc" id="L27">    return this;</span>
+  }
+
+  /**
+   * Sets the start date/time.
+   *
+   * @param s start date/time
+   * @return this builder
+   */
+  public EventBuilder startDateTime(LocalDateTime s) {
+<span class="fc" id="L37">    this.start = s;</span>
+<span class="fc" id="L38">    return this;</span>
+  }
+
+  /**
+   * Sets the end date/time.
+   *
+   * @param e end date/time
+   * @return this builder
+   */
+  public EventBuilder endDateTime(LocalDateTime e) {
+<span class="fc" id="L48">    this.end = e;</span>
+<span class="fc" id="L49">    return this;</span>
+  }
+
+  /**
+   * Sets the description.
+   *
+   * @param d description text
+   * @return this builder
+   */
+  public EventBuilder description(String d) {
+<span class="fc" id="L59">    this.description = d;</span>
+<span class="fc" id="L60">    return this;</span>
+  }
+
+  /**
+   * Sets the location.
+   *
+   * @param l location text
+   * @return this builder
+   */
+  public EventBuilder location(String l) {
+<span class="fc" id="L70">    this.location = l;</span>
+<span class="fc" id="L71">    return this;</span>
+  }
+
+  /**
+   * Sets the public visibility flag.
+   *
+   * @param v true for public, false for private
+   * @return this builder
+   */
+  public EventBuilder isPublic(boolean v) {
+<span class="fc" id="L81">    this.isPublic = v;</span>
+<span class="fc" id="L82">    return this;</span>
+  }
+
+  /**
+   * Sets the series identifier.
+   *
+   * @param id series id
+   * @return this builder
+   */
+  public EventBuilder seriesId(String id) {
+<span class="fc" id="L92">    this.seriesId = id;</span>
+<span class="fc" id="L93">    return this;</span>
+  }
+
+  /**
+   * Marks the event as all-day on the given date using {@link WorkingHours#START}
+   * and {@link WorkingHours#END}.
+   *
+   * @param date calendar date
+   * @return this builder
+   */
+  public EventBuilder allDay(LocalDate date) {
+<span class="fc" id="L104">    this.start = date.atTime(WorkingHours.START);</span>
+<span class="fc" id="L105">    this.end = date.atTime(WorkingHours.END);</span>
+<span class="fc" id="L106">    return this;</span>
+  }
+
+  /**
+   * Builds the {@link Event}.
+   * Defaults the end time to {@link WorkingHours#END} on the start date when no end is provided.
+   *
+   * @return a new {@link Event}
+   * @throws IllegalArgumentException if required fields are missing or invalid
+   */
+  public Event build() {
+<span class="fc bfc" id="L117" title="All 4 branches covered.">    if (subject == null || subject.isBlank()) {</span>
+<span class="fc" id="L118">      throw new IllegalArgumentException(&quot;Subject required&quot;);</span>
+    }
+<span class="fc bfc" id="L120" title="All 2 branches covered.">    if (start == null) {</span>
+<span class="fc" id="L121">      throw new IllegalArgumentException(&quot;Start date/time required&quot;);</span>
+    }
+
+<span class="fc bfc" id="L124" title="All 2 branches covered.">    LocalDateTime finalEnd = (end == null)</span>
+<span class="fc" id="L125">        ? start.toLocalDate().atTime(WorkingHours.END)</span>
+<span class="fc" id="L126">        : end;</span>
+
+<span class="fc bfc" id="L128" title="All 2 branches covered.">    if (finalEnd.isBefore(start)) {</span>
+<span class="fc" id="L129">      throw new IllegalArgumentException(&quot;End date/time before start&quot;);</span>
+    }
+
+<span class="fc" id="L132">    return new SingleEvent(subject, start, finalEnd, description, location, isPublic, seriesId);</span>
+  }
+
+  /**
+   * Creates a builder prepopulated from an existing event.
+   *
+   * @param e source event
+   * @return a builder initialized with the event's fields
+   */
+  public static EventBuilder from(Event e) {
+<span class="fc" id="L142">    EventBuilder b = new EventBuilder()</span>
+<span class="fc" id="L143">        .subject(e.getSubject())</span>
+<span class="fc" id="L144">        .startDateTime(e.getStartDateTime())</span>
+<span class="fc" id="L145">        .endDateTime(e.getEndDateTime())</span>
+<span class="fc" id="L146">        .isPublic(e.isPublic());</span>
+<span class="fc" id="L147">    b.description(e.getDescription().orElse(&quot;&quot;));</span>
+<span class="fc" id="L148">    b.location(e.getLocation().orElse(&quot;&quot;));</span>
+<span class="fc" id="L149">    e.getSeriesId().ifPresent(b::seriesId);</span>
+<span class="fc" id="L150">    return b;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

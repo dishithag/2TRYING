@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractCalendarController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar.controller</a> &gt; <span class="el_source">AbstractCalendarController.java</span></div><h1>AbstractCalendarController.java</h1><pre class="source lang-java linenums">package calendar.controller;
+
+import calendar.Calendar;
+import calendar.CalendarBook;
+import calendar.CalendarProperty;
+import calendar.Event;
+import calendar.EventProperty;
+import calendar.util.ExportUtil;
+import calendar.view.CalendarView;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+
+/**
+ * Base controller with shared execution logic for the calendar app.
+ */
+public abstract class AbstractCalendarController implements CalendarController {
+
+  protected final CalendarBook book;
+  protected final CalendarContext context;
+  protected final CalendarView view;
+  protected final BufferedReader reader;
+  protected final CommandParser parser;
+
+  /**
+   * Constructs a controller wired to a {@link calendar.CalendarBook} model,
+   * a {@link calendar.view.CalendarView}, and a character {@link java.io.Reader}.
+   * Initializes the {@link CalendarContext}, buffered input, and command parser.
+   *
+   * @param book  calendar-book model; must not be {@code null}
+   * @param view  view used for user-facing output; must not be {@code null}
+   * @param input character stream to read commands from; must not be {@code null}
+   * @throws IllegalArgumentException if any argument is {@code null}
+   */
+
+<span class="fc" id="L42">  protected AbstractCalendarController(CalendarBook book, CalendarView view, Reader input) {</span>
+<span class="fc bfc" id="L43" title="All 6 branches covered.">    if (book == null || view == null || input == null) {</span>
+<span class="fc" id="L44">      throw new IllegalArgumentException(&quot;Arguments cannot be null&quot;);</span>
+    }
+<span class="fc" id="L46">    this.book = book;</span>
+<span class="fc" id="L47">    this.context = new CalendarContext(book);</span>
+<span class="fc" id="L48">    this.view = view;</span>
+<span class="fc" id="L49">    this.reader = new BufferedReader(input);</span>
+<span class="fc" id="L50">    this.parser = new CommandParser();</span>
+<span class="fc" id="L51">  }</span>
+
+  @Override
+  public void run() {
+<span class="fc" id="L55">    displayWelcome();</span>
+<span class="fc" id="L56">    boolean foundExit = false;</span>
+<span class="fc" id="L57">    int lineNumber = 0;</span>
+    try {
+      while (true) {
+<span class="fc" id="L60">        showPrompt();</span>
+<span class="fc" id="L61">        String line = reader.readLine();</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (line == null) {</span>
+<span class="fc" id="L63">          break;</span>
+        }
+<span class="fc" id="L65">        lineNumber++;</span>
+<span class="fc" id="L66">        String trimmed = line.trim();</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (trimmed.isEmpty()) {</span>
+<span class="fc" id="L68">          continue;</span>
+        }
+        try {
+<span class="fc" id="L71">          CommandParser.Command cmd = parser.parse(trimmed);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">          if (cmd.getTypeEnum() == CommandType.EXIT) {</span>
+<span class="fc" id="L73">            handleExit();</span>
+<span class="fc" id="L74">            foundExit = true;</span>
+<span class="fc" id="L75">            break;</span>
+          }
+<span class="fc" id="L77">          executeCommand(cmd);</span>
+<span class="fc" id="L78">        } catch (Exception e) {</span>
+<span class="fc" id="L79">          handleError(e.getMessage(), lineNumber);</span>
+<span class="fc" id="L80">        }</span>
+<span class="fc" id="L81">      }</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">      if (!foundExit) {</span>
+<span class="fc" id="L83">        handleMissingExit();</span>
+      }
+<span class="nc" id="L85">    } catch (IOException e) {</span>
+<span class="nc" id="L86">      view.displayError(&quot;IO error: &quot; + e.getMessage());</span>
+<span class="fc" id="L87">    }</span>
+<span class="fc" id="L88">  }</span>
+
+  /**
+   * Executes a parsed {@link CommandParser.Command} by dispatching on
+   * {@code cmd.getTypeEnum()}. Depending on the type, this method creates or edits
+   * calendars/events, prints listings or status, exports data, or copies events,
+   * delegating to helpers such as {@link #handleEdit(CommandParser.Command)},
+   * {@link #handleEditCalendar(CommandParser.Command)},
+   * {@link #handleCopySingle(CommandParser.Command)},
+   * {@link #handleCopyOnDate(CommandParser.Command)}, and
+   * {@link #handleCopyBetween(CommandParser.Command)}.
+   * Any runtime errors are caught and surfaced through the {@link calendar.view.CalendarView}.
+   *
+   * @param cmd the parsed command to execute (must not be {@code null})
+   */
+
+  protected void executeCommand(CommandParser.Command cmd) {
+    try {
+<span class="pc bpc" id="L106" title="1 of 15 branches missed.">      switch (cmd.getTypeEnum()) {</span>
+        case CREATE_CALENDAR:
+          {
+<span class="fc" id="L109">          book.createCalendar(cmd.getCalendarName(), ZoneId.of(cmd.getTimezoneId()));</span>
+<span class="fc" id="L110">          view.displayMessage(&quot;Created calendar: &quot; + cmd.getCalendarName());</span>
+<span class="fc" id="L111">          break;</span>
+          }
+        case EDIT_CALENDAR:
+          {
+<span class="fc" id="L115">          handleEditCalendar(cmd);</span>
+<span class="fc" id="L116">          break;</span>
+          }
+        case USE_CALENDAR:
+          {
+<span class="fc" id="L120">          context.use(cmd.getCalendarName());</span>
+<span class="fc" id="L121">          view.displayMessage(&quot;Using calendar: &quot; + cmd.getCalendarName());</span>
+<span class="fc" id="L122">          break;</span>
+          }
+        case CREATE_SINGLE:
+          {
+<span class="fc" id="L126">          Calendar cal = context.current();</span>
+<span class="fc" id="L127">          Event e = cal.createEvent(cmd.getSubject(), cmd.getStartDateTime(), cmd.getEndDateTime());</span>
+<span class="fc" id="L128">          view.displayMessage(&quot;Event created: &quot; + e.getSubject());</span>
+<span class="fc" id="L129">          break;</span>
+          }
+        case CREATE_SERIES:
+          {
+<span class="fc" id="L133">          Calendar cal = context.current();</span>
+<span class="fc" id="L134">          List&lt;Event&gt; series = cal.createEventSeries(</span>
+<span class="fc" id="L135">              cmd.getSubject(), cmd.getStartDateTime(), cmd.getEndDateTime(),</span>
+<span class="fc" id="L136">              cmd.getWeekdays(), cmd.getOccurrences());</span>
+<span class="fc" id="L137">          view.displayMessage(&quot;Created &quot; + series.size() + &quot; events in series&quot;);</span>
+<span class="fc" id="L138">          break;</span>
+          }
+        case CREATE_SERIES_UNTIL:
+          {
+<span class="fc" id="L142">          Calendar cal = context.current();</span>
+<span class="fc" id="L143">          List&lt;Event&gt; seriesUntil = cal.createEventSeriesUntil(</span>
+<span class="fc" id="L144">              cmd.getSubject(), cmd.getStartDateTime(),</span>
+<span class="fc" id="L145">              cmd.getEndDateTime(), cmd.getWeekdays(), cmd.getUntilDate());</span>
+<span class="fc" id="L146">          view.displayMessage(&quot;Created &quot; + seriesUntil.size() + &quot; events in series&quot;);</span>
+<span class="fc" id="L147">          break;</span>
+          }
+        case EDIT:
+          {
+<span class="fc" id="L151">          handleEdit(cmd);</span>
+<span class="fc" id="L152">          break;</span>
+          }
+        case PRINT_ON:
+          {
+<span class="fc" id="L156">          Calendar cal = context.current();</span>
+<span class="fc" id="L157">          view.displayEvents(cal.getEventsOnDate(cmd.getStartDateTime().toLocalDate()));</span>
+<span class="fc" id="L158">          break;</span>
+          }
+        case PRINT_RANGE:
+          {
+<span class="fc" id="L162">          Calendar cal = context.current();</span>
+<span class="fc" id="L163">          view.displayEvents(cal.getEventsInRange(cmd.getStartDateTime(), cmd.getEndDateTime()));</span>
+<span class="fc" id="L164">          break;</span>
+          }
+        case STATUS:
+          {
+<span class="fc" id="L168">          Calendar cal = context.current();</span>
+<span class="fc" id="L169">          view.displayStatus(cal.isBusyAt(cmd.getStartDateTime()));</span>
+<span class="fc" id="L170">          break;</span>
+          }
+        case EXPORT:
+          {
+<span class="fc" id="L174">          Calendar cal = context.current();</span>
+<span class="fc" id="L175">          String path = ExportUtil.export(cal, cmd.getFileName());</span>
+<span class="fc" id="L176">          view.displayMessage(&quot;Exported to: &quot; + path);</span>
+<span class="fc" id="L177">          break;</span>
+          }
+        case COPY_EVENT:
+          {
+<span class="fc" id="L181">          handleCopySingle(cmd);</span>
+<span class="fc" id="L182">          break;</span>
+          }
+        case COPY_ON_DATE:
+          {
+<span class="fc" id="L186">          handleCopyOnDate(cmd);</span>
+<span class="fc" id="L187">          break;</span>
+          }
+        case COPY_BETWEEN:
+          {
+<span class="fc" id="L191">          handleCopyBetween(cmd);</span>
+<span class="fc" id="L192">          break;</span>
+          }
+        default:
+<span class="nc" id="L195">          view.displayError(&quot;Unknown command type: &quot; + cmd.getType());</span>
+      }
+<span class="fc" id="L197">    } catch (Exception e) {</span>
+<span class="fc" id="L198">      view.displayError(e.getMessage());</span>
+<span class="fc" id="L199">    }</span>
+<span class="fc" id="L200">  }</span>
+
+  /**
+   * Applies an edit command to the active calendar.
+   * Resolves the target {@link EventProperty} and the edit scope
+   * (event / events-from-date / whole series), coerces {@code cmd.getNewValue()}
+   * to a {@link java.time.LocalDateTime} when editing START/END or to text
+   * otherwise, and delegates to the corresponding Calendar edit method.
+   * Required fields in {@code cmd}: {@code subject}, {@code startDateTime},
+   * property (as {@code eventPropertyEnum} or token), new value, and scope
+   * (as {@code editScopeEnum} or token).
+   *
+   * @param cmd parsed edit command (not {@code null})
+   * @throws IllegalArgumentException if fields are missing or values cannot be parsed
+   */
+
+  protected void handleEdit(CommandParser.Command cmd) {
+<span class="fc" id="L217">    Calendar cal = context.current();</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    EventProperty prop = cmd.getEventPropertyEnum() != null</span>
+<span class="fc" id="L219">        ? cmd.getEventPropertyEnum()</span>
+<span class="fc" id="L220">        : EventProperty.fromToken(cmd.getProperty());</span>
+
+<span class="fc" id="L222">    LocalDateTime dt = null;</span>
+<span class="fc" id="L223">    String text = null;</span>
+<span class="fc bfc" id="L224" title="All 4 branches covered.">    if (prop == EventProperty.START || prop == EventProperty.END) {</span>
+<span class="fc" id="L225">      dt = LocalDateTime.parse(cmd.getNewValue());</span>
+    } else {
+<span class="fc" id="L227">      text = cmd.getNewValue();</span>
+    }
+
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">    EditScope scope = cmd.getEditScopeEnum() != null</span>
+<span class="fc" id="L231">        ? cmd.getEditScopeEnum()</span>
+<span class="pc" id="L232">        : EditScope.fromToken(cmd.getEditScope());</span>
+
+<span class="pc bpc" id="L234" title="1 of 4 branches missed.">    switch (scope) {</span>
+      case EVENT:
+<span class="fc" id="L236">        cal.editEvent(cmd.getSubject(), cmd.getStartDateTime(), prop, dt, text);</span>
+<span class="fc" id="L237">        view.displayMessage(&quot;Event edited&quot;);</span>
+<span class="fc" id="L238">        break;</span>
+      case EVENTS:
+<span class="fc" id="L240">        cal.editEventsFromDate(cmd.getSubject(), cmd.getStartDateTime(), prop, dt, text);</span>
+<span class="fc" id="L241">        view.displayMessage(&quot;Events edited&quot;);</span>
+<span class="fc" id="L242">        break;</span>
+      case SERIES:
+<span class="fc" id="L244">        cal.editSeries(cmd.getSubject(), cmd.getStartDateTime(), prop, dt, text);</span>
+<span class="fc" id="L245">        view.displayMessage(&quot;Series edited&quot;);</span>
+<span class="fc" id="L246">        break;</span>
+      default:
+<span class="nc" id="L248">        view.displayError(&quot;Unknown edit scope: &quot; + cmd.getEditScope());</span>
+    }
+<span class="fc" id="L250">  }</span>
+
+  /**
+   * Handles an &quot;edit calendar&quot; command.
+   *
+   * &lt;p&gt;Supported properties:
+   * &lt;ul&gt;
+   *   &lt;li&gt;{@link CalendarProperty#NAME} — renames {@code cmd.getCalendarName()}
+   *   to {@code cmd.getNewValue()}.&lt;/li&gt;
+   *   &lt;li&gt;{@link CalendarProperty#TIMEZONE} — updates the calendar
+   *   timezone to {@code ZoneId.of(cmd.getNewValue())}.&lt;/li&gt;
+   * &lt;/ul&gt;
+   * On success, a confirmation is printed via the {@link calendar.view.CalendarView}.
+   * If the property is not supported, an error message is shown.
+   *
+   * &lt;p&gt;Required fields in {@code cmd}: {@code calendarName}, {@code newValue},
+   * and {@code calendarPropertyEnum}.&lt;/p&gt;
+   *
+   * @param cmd parsed calendar-edit command (not {@code null})
+   * @throws IllegalArgumentException    if the calendar does not exist or a rename conflicts
+   * @throws java.time.DateTimeException if {@code newValue} is not a valid IANA timezone ID
+   */
+
+  protected void handleEditCalendar(CommandParser.Command cmd) {
+<span class="fc" id="L274">    CalendarProperty cp = cmd.getCalendarPropertyEnum();</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">    if (cp == CalendarProperty.NAME) {</span>
+<span class="fc" id="L276">      book.renameCalendar(cmd.getCalendarName(), cmd.getNewValue());</span>
+<span class="fc" id="L277">      view.displayMessage(&quot;Calendar renamed to: &quot; + cmd.getNewValue());</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">    } else if (cp == CalendarProperty.TIMEZONE) {</span>
+<span class="fc" id="L279">      book.changeTimezone(cmd.getCalendarName(), ZoneId.of(cmd.getNewValue()));</span>
+<span class="fc" id="L280">      view.displayMessage(&quot;Timezone updated for: &quot; + cmd.getCalendarName());</span>
+    } else {
+<span class="fc" id="L282">      view.displayError(&quot;Unknown calendar property: &quot; + cmd.getProperty());</span>
+    }
+<span class="fc" id="L284">  }</span>
+
+  /**
+   * Copies a single event; prevents exact duplicates only.
+   */
+  protected void handleCopySingle(CommandParser.Command cmd) {
+<span class="fc" id="L290">    Calendar src = context.current();</span>
+<span class="fc" id="L291">    Calendar dst = book.getCalendar(cmd.getTargetCalendar());</span>
+<span class="fc" id="L292">    List&lt;Event&gt; matches = src.findEvents(cmd.getSubject(), cmd.getStartDateTime());</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">    if (matches.size() != 1) {</span>
+<span class="fc" id="L294">      throw new IllegalArgumentException(&quot;Event not found or not unique&quot;);</span>
+    }
+<span class="fc" id="L296">    Event e = matches.get(0);</span>
+<span class="fc" id="L297">    Duration dur = Duration.between(e.getStartDateTime(), e.getEndDateTime());</span>
+<span class="fc" id="L298">    LocalDateTime newStart = cmd.getTargetDateTime();</span>
+<span class="fc" id="L299">    LocalDateTime newEnd = newStart.plus(dur);</span>
+
+<span class="fc bfc" id="L301" title="All 2 branches covered.">    if (existsExact(dst, e.getSubject(), newStart, newEnd)) {</span>
+<span class="fc" id="L302">      view.displayMessage(&quot;Copied 0 event(s) to &quot; + cmd.getTargetCalendar());</span>
+<span class="fc" id="L303">      return;</span>
+    }
+
+<span class="fc" id="L306">    dst.copyFrom(e, newStart, newEnd);</span>
+<span class="fc" id="L307">    view.displayMessage(&quot;Copied 1 event to &quot; + cmd.getTargetCalendar());</span>
+<span class="fc" id="L308">  }</span>
+
+  /**
+   * Copies all events on a given day; skips if subject already exists on that day in the target.
+   */
+  protected void handleCopyOnDate(CommandParser.Command cmd) {
+<span class="fc" id="L314">    Calendar src = context.current();</span>
+<span class="fc" id="L315">    Calendar dst = book.getCalendar(cmd.getTargetCalendar());</span>
+<span class="fc" id="L316">    LocalDate srcDay = cmd.getDay();</span>
+<span class="fc" id="L317">    List&lt;Event&gt; todays = src.getEventsOnDate(srcDay);</span>
+<span class="fc" id="L318">    int copied = 0;</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">    for (Event e : todays) {</span>
+<span class="fc" id="L320">      Duration dur = Duration.between(e.getStartDateTime(), e.getEndDateTime());</span>
+<span class="fc" id="L321">      LocalDateTime newStart = cmd.getTargetDateTime()</span>
+<span class="fc" id="L322">          .toLocalDate().atTime(convertStartToTargetLocalTime(e, src, dst));</span>
+<span class="fc" id="L323">      LocalDateTime newEnd = newStart.plus(dur);</span>
+
+<span class="fc bfc" id="L325" title="All 2 branches covered.">      if (existsExact(dst, e.getSubject(), newStart, newEnd)</span>
+<span class="pc bpc" id="L326" title="1 of 2 branches missed.">          || existsSameDaySubject(dst, e.getSubject(), newStart)) {</span>
+<span class="nc" id="L327">        continue;</span>
+      }
+
+<span class="fc" id="L330">      dst.copyFrom(e, newStart, newEnd);</span>
+<span class="fc" id="L331">      copied++;</span>
+<span class="fc" id="L332">    }</span>
+<span class="fc" id="L333">    view.displayMessage(&quot;Copied &quot; + copied + &quot; event(s) to &quot; + cmd.getTargetCalendar());</span>
+<span class="fc" id="L334">  }</span>
+
+  /**
+   * Copies all events in a range; skips if subject already exists on that day in the target.
+   */
+  protected void handleCopyBetween(CommandParser.Command cmd) {
+<span class="fc" id="L340">    Calendar src = context.current();</span>
+<span class="fc" id="L341">    Calendar dst = book.getCalendar(cmd.getTargetCalendar());</span>
+
+<span class="fc" id="L343">    LocalDate startDay = cmd.getRangeStart();</span>
+<span class="fc" id="L344">    LocalDate endDay = cmd.getRangeEnd();</span>
+<span class="fc" id="L345">    LocalDateTime srcStart = startDay.atStartOfDay();</span>
+<span class="fc" id="L346">    LocalDateTime srcEnd = endDay.plusDays(1).atStartOfDay();</span>
+
+<span class="fc" id="L348">    List&lt;Event&gt; inRange = src.getEventsInRange(srcStart, srcEnd.minusSeconds(1));</span>
+<span class="fc" id="L349">    int copied = 0;</span>
+
+<span class="fc bfc" id="L351" title="All 2 branches covered.">    for (Event e : inRange) {</span>
+<span class="fc" id="L352">      LocalDate d = e.getStartDateTime().toLocalDate();</span>
+<span class="fc" id="L353">      long dayOffset = java.time.temporal.ChronoUnit.DAYS.between(startDay, d);</span>
+<span class="fc" id="L354">      Duration dur = Duration.between(e.getStartDateTime(), e.getEndDateTime());</span>
+
+<span class="fc" id="L356">      LocalDate targetDay = cmd.getTargetDateTime().toLocalDate().plusDays(dayOffset);</span>
+<span class="fc" id="L357">      LocalDateTime newStart = targetDay.atTime(convertStartToTargetLocalTime(e, src, dst));</span>
+<span class="fc" id="L358">      LocalDateTime newEnd = newStart.plus(dur);</span>
+
+<span class="fc bfc" id="L360" title="All 2 branches covered.">      if (existsExact(dst, e.getSubject(), newStart, newEnd)</span>
+<span class="fc bfc" id="L361" title="All 2 branches covered.">          || existsSameDaySubject(dst, e.getSubject(), newStart)) {</span>
+<span class="fc" id="L362">        continue;</span>
+      }
+
+<span class="fc" id="L365">      dst.copyFrom(e, newStart, newEnd);</span>
+<span class="fc" id="L366">      copied++;</span>
+<span class="fc" id="L367">    }</span>
+
+<span class="fc" id="L369">    view.displayMessage(&quot;Copied &quot; + copied + &quot; event(s) to &quot; + cmd.getTargetCalendar());</span>
+<span class="fc" id="L370">  }</span>
+
+  private LocalTime convertStartToTargetLocalTime(Event event, Calendar src, Calendar dst) {
+<span class="fc" id="L373">    return event.getStartDateTime()</span>
+<span class="fc" id="L374">        .atZone(src.getZoneId())</span>
+<span class="fc" id="L375">        .withZoneSameInstant(dst.getZoneId())</span>
+<span class="fc" id="L376">        .toLocalTime();</span>
+  }
+
+  private boolean existsExact(Calendar cal, String subject, LocalDateTime start,
+                              LocalDateTime end) {
+<span class="fc bfc" id="L381" title="All 2 branches covered.">    if (!cal.findEvents(subject, start, end).isEmpty()) {</span>
+<span class="fc" id="L382">      return true;</span>
+    }
+<span class="pc bpc" id="L384" title="1 of 2 branches missed.">    return !cal.findEvents(subject, start).isEmpty();</span>
+  }
+
+  private boolean existsSameDaySubject(Calendar cal, String subject, LocalDateTime candidateStart) {
+<span class="fc" id="L388">    LocalDate day = candidateStart.toLocalDate();</span>
+<span class="fc bfc" id="L389" title="All 2 branches covered.">    for (Event e : cal.getEventsOnDate(day)) {</span>
+<span class="fc bfc" id="L390" title="All 2 branches covered.">      if (e.getSubject().equals(subject)) {</span>
+<span class="fc" id="L391">        return true;</span>
+      }
+<span class="fc" id="L393">    }</span>
+<span class="fc" id="L394">    return false;</span>
+  }
+
+  /**
+   * Prints the startup banner or instructions for this controller mode.
+   * Called once at the beginning of {@link #run()}.
+   */
+  protected abstract void displayWelcome();
+
+  /**
+   * Shows the user prompt before reading each command.
+   * Implementations may no-op for headless/script modes.
+   */
+  protected abstract void showPrompt();
+
+  /**
+   * Runs when an explicit {@code exit} command is processed.
+   * Use to print a farewell and perform final cleanup.
+   */
+  protected abstract void handleExit();
+
+  /**
+   * Reports a recoverable error tied to a single input line.
+   *
+   * @param message    human-readable error text
+   * @param lineNumber 1-based line number in the input
+   */
+  protected abstract void handleError(String message, int lineNumber);
+
+  /**
+   * Invoked when input ends without an explicit {@code exit}.
+   * Useful for warning users/scripts about an incomplete session.
+   */
+  protected abstract void handleMissingExit();
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,33 @@
+create calendar --name Fall --timezone America/New_York
+create calendar --name Spring --timezone America/Los_Angeles
+use calendar --name Fall
+create event "Orientation" on 2024-09-03
+create event "Lecture 1" from 2024-09-05T10:00 to 2024-09-05T11:00
+create event "Lecture 2" from 2024-09-10T10:00 to 2024-09-10T11:00
+create event "CS5010" from 2024-09-09T10:00 to 2024-09-09T11:00 repeats MW for 6 times
+create event "Office Hours" from 2024-09-10T15:00 to 2024-09-10T16:00 repeats TR until 2024-12-05
+create event "Seminar Day" on 2024-09-17 repeats TR for 3 times
+print events on 2024-09-10
+print events from 2024-09-05T00:00 to 2024-09-12T23:59
+show status on 2024-09-10T15:00
+edit event location "Lecture 1" from 2024-09-05T10:00 with "West Village 325"
+edit events subject "CS5010" from 2024-09-23T10:00 with "CS5010 (Module 2)"
+edit series start "CS5010" from 2024-09-09T10:00 with 2024-09-09T10:30
+copy event "Lecture 1" on 2024-09-05T10:00 --target Spring to 2025-01-08T10:00
+copy events on 2024-09-10 --target Spring to 2025-01-09
+copy events between 2024-09-05 and 2024-12-18 --target Spring to 2025-01-08
+use calendar --name Spring
+print events on 2025-01-08
+print events on 2025-01-09
+print events from 2025-01-08T00:00 to 2025-01-20T23:59
+show status on 2025-01-08T10:00
+export cal spring_calendar.csv
+export cal spring_calendar.ical
+use calendar --name Fall
+export cal fall_calendar.csv
+export cal fall_calendar.ical
+edit calendar --name Spring --property timezone America/Los_Angeles
+edit calendar --name Fall --property name "Fall 2024"
+use calendar --name "Fall 2024"
+export cal fall_calendar_renamed.csv
+exit

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarEditTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.002">
+  <properties/>
+  <testcase name="testEditEventStartPropertyCoverage" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEventNotFound" classname="CalendarEditTest" time="0.001"/>
+  <testcase name="testEditEventEndPropertyCoverage" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditSingleEvent" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testBuildModifiedEventUnsupportedProperty" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEventStatusPublicCaseInsensitive" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_notFound" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEvent_createsDuplicate" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditSeries_nonSeriesEvent_handlesGracefully" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditSeries_notFound" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEventSubject" classname="CalendarEditTest" time="0.001"/>
+  <testcase name="testEditEventStatusPropertyCoverage" classname="CalendarEditTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_createsDuplicate" classname="CalendarEditTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CalendarImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar</a> &gt; <span class="el_source">CalendarImpl.java</span></div><h1>CalendarImpl.java</h1><pre class="source lang-java linenums">package calendar;
+
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * Default implementation of a {@link Calendar}.
+ * Stores events in memory and supports single events and series with simple edits.
+ * All LocalDateTime values are interpreted in this calendar's ZoneId.
+ */
+public class CalendarImpl implements Calendar {
+
+  private final List&lt;Event&gt; events;
+  private final SeriesIndex seriesIndex;
+
+  private String name;
+  private ZoneId zoneId;
+
+  /**
+   * Creates an empty calendar named &quot;default&quot; in America/New_York time zone.
+   */
+  public CalendarImpl() {
+<span class="fc" id="L35">    this(&quot;default&quot;, ZoneId.of(&quot;America/New_York&quot;));</span>
+<span class="fc" id="L36">  }</span>
+
+  /**
+   * Creates an empty calendar with the given name and time zone.
+   *
+   * @param name   calendar name
+   * @param zoneId calendar ZoneId
+   */
+<span class="fc" id="L44">  public CalendarImpl(String name, ZoneId zoneId) {</span>
+<span class="fc bfc" id="L45" title="All 6 branches covered.">    if (name == null || name.isBlank() || zoneId == null) {</span>
+<span class="fc" id="L46">      throw new IllegalArgumentException(&quot;Name and ZoneId are required&quot;);</span>
+    }
+<span class="fc" id="L48">    this.name = name;</span>
+<span class="fc" id="L49">    this.zoneId = zoneId;</span>
+<span class="fc" id="L50">    this.events = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L51">    this.seriesIndex = new SeriesIndex();</span>
+<span class="fc" id="L52">  }</span>
+
+  @Override
+  public String getName() {
+<span class="fc" id="L56">    return this.name;</span>
+  }
+
+  @Override
+  public void rename(String newName) {
+<span class="fc bfc" id="L61" title="All 4 branches covered.">    if (newName == null || newName.isBlank()) {</span>
+<span class="fc" id="L62">      throw new IllegalArgumentException(&quot;Name cannot be blank&quot;);</span>
+    }
+<span class="fc" id="L64">    this.name = newName;</span>
+<span class="fc" id="L65">  }</span>
+
+  @Override
+  public ZoneId getZoneId() {
+<span class="fc" id="L69">    return this.zoneId;</span>
+  }
+
+  @Override
+  public void setZoneId(ZoneId zone) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (zone == null) {</span>
+<span class="fc" id="L75">      throw new IllegalArgumentException(&quot;ZoneId cannot be null&quot;);</span>
+    }
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    if (!zone.equals(this.zoneId)) {</span>
+<span class="fc" id="L78">      convertAllEventsToZone(this.zoneId, zone);</span>
+<span class="fc" id="L79">      this.zoneId = zone;</span>
+<span class="fc" id="L80">      seriesIndex.rebuild(events);</span>
+    }
+<span class="fc" id="L82">  }</span>
+
+  @Override
+  public Event createEvent(String subject, LocalDateTime start, LocalDateTime end) {
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    if (eventExists(subject, start, end)) {</span>
+<span class="fc" id="L87">      throw new IllegalArgumentException(</span>
+          &quot;Event with same subject, start, and end already exists&quot;);
+    }
+<span class="fc" id="L90">    Event event = new EventBuilder()</span>
+<span class="fc" id="L91">        .subject(subject)</span>
+<span class="fc" id="L92">        .startDateTime(start)</span>
+<span class="fc" id="L93">        .endDateTime(end)</span>
+<span class="fc" id="L94">        .build();</span>
+<span class="fc" id="L95">    events.add(event);</span>
+<span class="pc" id="L96">    event.getSeriesId().ifPresent(id -&gt; seriesIndex.add(id, event.getStartDateTime()));</span>
+<span class="fc" id="L97">    return event;</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; createEventSeries(String subject,
+                                       LocalDateTime start,
+                                       LocalDateTime end,
+                                       Set&lt;DayOfWeek&gt; weekdays,
+                                       int occurrences) {
+<span class="fc bfc" id="L106" title="All 2 branches covered.">    if (occurrences &lt;= 0) {</span>
+<span class="fc" id="L107">      throw new IllegalArgumentException(&quot;Occurrences must be positive&quot;);</span>
+    }
+<span class="fc" id="L109">    validateSeriesInstanceShape(start, end, weekdays);</span>
+
+<span class="fc" id="L111">    String seriesId = generateSeriesId();</span>
+<span class="fc" id="L112">    List&lt;Event&gt; created = createSeries(</span>
+        subject, start, end, weekdays, seriesId, occurrences, null
+    );
+<span class="fc bfc" id="L115" title="All 2 branches covered.">    for (Event e : created) {</span>
+<span class="fc" id="L116">      seriesIndex.add(seriesId, e.getStartDateTime());</span>
+<span class="fc" id="L117">    }</span>
+<span class="fc" id="L118">    return created;</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; createEventSeriesUntil(String subject,
+                                            LocalDateTime start,
+                                            LocalDateTime end,
+                                            Set&lt;DayOfWeek&gt; weekdays,
+                                            LocalDate endDate) {
+<span class="fc" id="L127">    validateSeriesInstanceShape(start, end, weekdays);</span>
+
+<span class="fc" id="L129">    String seriesId = generateSeriesId();</span>
+<span class="fc" id="L130">    List&lt;Event&gt; created = createSeries(</span>
+        subject, start, end, weekdays, seriesId, Integer.MAX_VALUE, endDate
+    );
+<span class="fc bfc" id="L133" title="All 2 branches covered.">    for (Event e : created) {</span>
+<span class="fc" id="L134">      seriesIndex.add(seriesId, e.getStartDateTime());</span>
+<span class="fc" id="L135">    }</span>
+<span class="fc" id="L136">    return created;</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; findEvents(String subject, LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L141">    return events.stream()</span>
+<span class="fc" id="L142">        .filter(e -&gt; e.getSubject().equals(subject))</span>
+<span class="fc" id="L143">        .filter(e -&gt; e.getStartDateTime().equals(start))</span>
+<span class="fc bfc" id="L144" title="All 4 branches covered.">        .filter(e -&gt; end == null || e.getEndDateTime().equals(end))</span>
+<span class="fc" id="L145">        .collect(Collectors.toList());</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; findEvents(String subject, LocalDateTime start) {
+<span class="fc" id="L150">    return findEvents(subject, start, null);</span>
+  }
+
+  @Override
+  public void editEvent(String subject, LocalDateTime start,
+                        String property, String newValue) {
+<span class="fc" id="L156">    List&lt;Event&gt; matches = findEvents(subject, start, null);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">    if (matches.isEmpty()) {</span>
+<span class="fc" id="L158">      throw new IllegalArgumentException(&quot;No event found with given criteria&quot;);</span>
+    }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">    if (matches.size() &gt; 1) {</span>
+<span class="fc" id="L161">      throw new IllegalArgumentException(&quot;Multiple events match criteria&quot;);</span>
+    }
+<span class="fc" id="L163">    Event target = matches.get(0);</span>
+<span class="fc" id="L164">    EventProperty prop = parseProperty(property);</span>
+<span class="fc" id="L165">    Event updated = applyProperty(target, prop, newValue);</span>
+<span class="fc" id="L166">    enforceNoDuplicateOnReplace(target, updated);</span>
+<span class="fc" id="L167">    replaceEvent(target, updated);</span>
+<span class="fc" id="L168">  }</span>
+
+  /**
+   * Edits a single event identified by {@code subject} and {@code start}.
+   *
+   * &lt;p&gt;Typed convenience overload: for {@link EventProperty#START} or {@link EventProperty#END}
+   * supply {@code newDateTime}; for all other properties supply {@code newText}.&lt;/p&gt;
+   *
+   * @param subject     subject of the existing event to edit
+   * @param start       exact start timestamp of the event to disambiguate
+   * @param property    which event field to change
+   * @param newDateTime new timestamp when {@code property} is START or END; otherwise ignored
+   * @param newText     new textual value when {@code property} is not a time field;
+   *                    otherwise ignored
+   * @throws IllegalArgumentException if the event is not found/ambiguous, the new value is
+   *                                  missing or invalid,
+   *                                  or the change would create a duplicate event.
+   */
+
+  public void editEvent(String subject,
+                        LocalDateTime start,
+                        EventProperty property,
+                        LocalDateTime newDateTime,
+                        String newText) {
+<span class="fc" id="L192">    String val = coerceValue(property, newDateTime, newText);</span>
+<span class="fc" id="L193">    editEvent(subject, start, property.name().toLowerCase(), val);</span>
+<span class="fc" id="L194">  }</span>
+
+  @Override
+  public void editEventsFromDate(String subject, LocalDateTime start,
+                                 String property, String newValue) {
+<span class="fc" id="L199">    List&lt;Event&gt; matches = findEvents(subject, start, null);</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">    if (matches.isEmpty()) {</span>
+<span class="fc" id="L201">      throw new IllegalArgumentException(&quot;No event found&quot;);</span>
+    }
+
+<span class="fc" id="L204">    Event pivot = matches.get(0);</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">    if (!pivot.isSeriesPart()) {</span>
+<span class="fc" id="L206">      EventProperty p = parseProperty(property);</span>
+<span class="fc" id="L207">      Event updated = applyProperty(pivot, p, newValue);</span>
+<span class="fc" id="L208">      enforceNoDuplicateOnReplace(pivot, updated);</span>
+<span class="fc" id="L209">      replaceEvent(pivot, updated);</span>
+<span class="fc" id="L210">      return;</span>
+    }
+
+<span class="fc" id="L213">    String originalSeriesId = pivot.getSeriesId().orElse(null);</span>
+<span class="fc" id="L214">    List&lt;Event&gt; seriesToEdit = events.stream()</span>
+<span class="fc" id="L215">        .filter(e -&gt; e.getSeriesId().map(originalSeriesId::equals).orElse(false))</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        .filter(e -&gt; !e.getStartDateTime().isBefore(start))</span>
+<span class="fc" id="L217">        .collect(Collectors.toList());</span>
+
+<span class="fc" id="L219">    EventProperty prop = parseProperty(property);</span>
+
+<span class="fc bfc" id="L221" title="All 2 branches covered.">    if (prop == EventProperty.START) {</span>
+<span class="fc" id="L222">      String newSeriesId = generateSeriesId();</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">      for (Event e : seriesToEdit) {</span>
+<span class="fc" id="L224">        LocalDateTime templ = LocalDateTime.parse(newValue);</span>
+<span class="fc" id="L225">        Duration duration = Duration.between(</span>
+<span class="fc" id="L226">            e.getStartDateTime().toLocalTime(), e.getEndDateTime().toLocalTime()</span>
+        );
+<span class="fc" id="L228">        LocalDateTime adjustedStart = e.getStartDateTime()</span>
+<span class="fc" id="L229">            .toLocalDate()</span>
+<span class="fc" id="L230">            .atTime(templ.toLocalTime());</span>
+<span class="fc" id="L231">        LocalDateTime adjustedEnd = adjustedStart.plus(duration);</span>
+
+<span class="fc" id="L233">        Event modified = EventBuilder.from(e)</span>
+<span class="fc" id="L234">            .startDateTime(adjustedStart)</span>
+<span class="fc" id="L235">            .endDateTime(adjustedEnd)</span>
+<span class="fc" id="L236">            .seriesId(newSeriesId)</span>
+<span class="fc" id="L237">            .build();</span>
+
+<span class="fc" id="L239">        enforceNoDuplicateOnReplace(e, modified);</span>
+<span class="fc" id="L240">        replaceEvent(e, modified);</span>
+<span class="fc" id="L241">      }</span>
+<span class="fc" id="L242">      return;</span>
+    }
+
+<span class="fc bfc" id="L245" title="All 2 branches covered.">    for (Event e : seriesToEdit) {</span>
+<span class="fc" id="L246">      Event modified = applyProperty(e, prop, newValue);</span>
+<span class="fc" id="L247">      enforceNoDuplicateOnReplace(e, modified);</span>
+<span class="fc" id="L248">      replaceEvent(e, modified);</span>
+<span class="fc" id="L249">    }</span>
+<span class="fc" id="L250">  }</span>
+
+  /**
+   * Edits events from (and including) {@code start} going forward for the given {@code subject}.
+   *
+   * &lt;p&gt;If the matched event is not part of a series, only that one event is edited.
+   * If it is part of a series, the change is applied to that occurrence and all future
+   * occurrences in the same series. For time fields (START/END) use {@code newDateTime};
+   * for other fields use {@code newText}.&lt;/p&gt;
+   *
+   * @param subject     subject used to locate the series or single event
+   * @param start       pivot start timestamp (inclusive) from which edits apply
+   * @param property    which event field to change
+   * @param newDateTime new timestamp when {@code property} is START or END; otherwise ignored
+   * @param newText     new textual value when {@code property} is not a time field;
+   *                    otherwise ignored
+   * @throws IllegalArgumentException if no matching event is found, a value is missing/invalid,
+   *                                  or the change would create a duplicate event.
+   */
+
+  public void editEventsFromDate(String subject,
+                                 LocalDateTime start,
+                                 EventProperty property,
+                                 LocalDateTime newDateTime,
+                                 String newText) {
+<span class="fc" id="L275">    String val = coerceValue(property, newDateTime, newText);</span>
+<span class="fc" id="L276">    editEventsFromDate(subject, start, property.name().toLowerCase(), val);</span>
+<span class="fc" id="L277">  }</span>
+
+  @Override
+  public void editSeries(String subject, LocalDateTime start,
+                         String property, String newValue) {
+<span class="fc" id="L282">    List&lt;Event&gt; matches = findEvents(subject, start, null);</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">    if (matches.isEmpty()) {</span>
+<span class="fc" id="L284">      throw new IllegalArgumentException(&quot;No event found&quot;);</span>
+    }
+
+<span class="fc" id="L287">    Event target = matches.get(0);</span>
+<span class="fc" id="L288">    String seriesId = target.getSeriesId().orElse(null);</span>
+
+<span class="fc bfc" id="L290" title="All 2 branches covered.">    if (seriesId == null) {</span>
+<span class="fc" id="L291">      EventProperty p = parseProperty(property);</span>
+<span class="fc" id="L292">      Event updated = applyProperty(target, p, newValue);</span>
+<span class="fc" id="L293">      enforceNoDuplicateOnReplace(target, updated);</span>
+<span class="fc" id="L294">      replaceEvent(target, updated);</span>
+<span class="fc" id="L295">      return;</span>
+    }
+
+<span class="fc" id="L298">    EventProperty prop = parseProperty(property);</span>
+
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    if (prop == EventProperty.START) {</span>
+<span class="fc" id="L301">      LocalDateTime templ = LocalDateTime.parse(newValue);</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">      for (Event e : getEventsBySeriesId(seriesId)) {</span>
+<span class="fc" id="L303">        java.time.Duration dur = java.time.Duration.between(</span>
+<span class="fc" id="L304">            e.getStartDateTime(), e.getEndDateTime());</span>
+<span class="fc" id="L305">        LocalDateTime newStart = e.getStartDateTime()</span>
+<span class="fc" id="L306">            .toLocalDate()</span>
+<span class="fc" id="L307">            .atTime(templ.toLocalTime());</span>
+<span class="fc" id="L308">        LocalDateTime newEnd = newStart.plus(dur);</span>
+<span class="fc" id="L309">        Event updated = EventBuilder.from(e)</span>
+<span class="fc" id="L310">            .startDateTime(newStart)</span>
+<span class="fc" id="L311">            .endDateTime(newEnd)</span>
+<span class="fc" id="L312">            .build();</span>
+<span class="fc" id="L313">        enforceNoDuplicateOnReplace(e, updated);</span>
+<span class="fc" id="L314">        replaceEvent(e, updated);</span>
+<span class="fc" id="L315">      }</span>
+<span class="fc" id="L316">      return;</span>
+    }
+
+<span class="fc bfc" id="L319" title="All 2 branches covered.">    for (Event e : getEventsBySeriesId(seriesId)) {</span>
+<span class="fc" id="L320">      Event updated = applyProperty(e, prop, newValue);</span>
+<span class="fc" id="L321">      enforceNoDuplicateOnReplace(e, updated);</span>
+<span class="fc" id="L322">      replaceEvent(e, updated);</span>
+<span class="fc" id="L323">    }</span>
+<span class="fc" id="L324">  }</span>
+
+  /**
+   * Edits an entire series (or the single event if it is not in a series) identified by
+   * {@code subject} and the occurrence {@code start}.
+   *
+   * &lt;p&gt;For time fields ({@link EventProperty#START} or {@link EventProperty#END})
+   * supply {@code newDateTime}. For all other fields, supply {@code newText}.
+   * The non-applicable parameter is ignored.&lt;/p&gt;
+   *
+   * @param subject     subject used to locate the series
+   * @param start       start timestamp of a known occurrence (identifies the series)
+   * @param property    which event field to change
+   * @param newDateTime new timestamp when {@code property} is START or END;
+   *                    otherwise ignored
+   * @param newText     new textual value when {@code property} is not a time field;
+   *                    otherwise ignored
+   * @throws IllegalArgumentException if no matching event is found, the new value is
+   *                                  missing/invalid, or the change would create a duplicate event.
+   */
+
+  public void editSeries(String subject,
+                         LocalDateTime start,
+                         EventProperty property,
+                         LocalDateTime newDateTime,
+                         String newText) {
+<span class="fc" id="L350">    String val = coerceValue(property, newDateTime, newText);</span>
+<span class="fc" id="L351">    editSeries(subject, start, property.name().toLowerCase(), val);</span>
+<span class="fc" id="L352">  }</span>
+
+  @Override
+  public List&lt;Event&gt; getEventsOnDate(LocalDate date) {
+<span class="fc" id="L356">    LocalDateTime startOfDay = date.atStartOfDay();</span>
+<span class="fc" id="L357">    LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();</span>
+
+<span class="fc" id="L359">    return events.stream()</span>
+<span class="fc bfc" id="L360" title="All 2 branches covered.">        .filter(e -&gt; !e.getEndDateTime().isBefore(startOfDay)</span>
+<span class="fc bfc" id="L361" title="All 2 branches covered.">            &amp;&amp; e.getStartDateTime().isBefore(endOfDay))</span>
+<span class="fc" id="L362">        .sorted(Comparator.comparing(Event::getStartDateTime))</span>
+<span class="fc" id="L363">        .collect(Collectors.toList());</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; getEventsInRange(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L368">    return events.stream()</span>
+<span class="fc bfc" id="L369" title="All 2 branches covered.">        .filter(e -&gt; !e.getEndDateTime().isBefore(start)</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">            &amp;&amp; !e.getStartDateTime().isAfter(end))</span>
+<span class="fc" id="L371">        .sorted(Comparator.comparing(Event::getStartDateTime))</span>
+<span class="fc" id="L372">        .collect(Collectors.toList());</span>
+  }
+
+  @Override
+  public boolean isBusyAt(LocalDateTime dateTime) {
+<span class="fc" id="L377">    return events.stream().anyMatch(e -&gt;</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">        !dateTime.isBefore(e.getStartDateTime())</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">            &amp;&amp; dateTime.isBefore(e.getEndDateTime()));</span>
+  }
+
+  @Override
+  public List&lt;Event&gt; getAllEvents() {
+<span class="fc" id="L384">    return new ArrayList&lt;&gt;(events);</span>
+  }
+
+  private List&lt;Event&gt; createSeries(String subject,
+                                   LocalDateTime start,
+                                   LocalDateTime end,
+                                   Set&lt;DayOfWeek&gt; repeatDays,
+                                   String seriesId,
+                                   int maxOccurrences,
+                                   LocalDate untilDate) {
+<span class="fc" id="L394">    List&lt;Event&gt; created = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L395">    LocalDateTime currentStart = start;</span>
+<span class="fc" id="L396">    LocalDateTime currentEnd = end;</span>
+<span class="fc" id="L397">    int count = 0;</span>
+<span class="fc" id="L398">    Set&lt;DayOfWeek&gt; days = new HashSet&lt;&gt;(repeatDays);</span>
+
+    while (true) {
+<span class="fc" id="L401">      LocalDate currentDate = currentStart.toLocalDate();</span>
+<span class="fc bfc" id="L402" title="All 4 branches covered.">      if (untilDate != null &amp;&amp; currentDate.isAfter(untilDate)) {</span>
+<span class="fc" id="L403">        break;</span>
+      }
+<span class="fc bfc" id="L405" title="All 2 branches covered.">      if (days.contains(currentStart.getDayOfWeek())) {</span>
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">        if (!eventExists(subject, currentStart, currentEnd)) {</span>
+<span class="fc" id="L407">          Event event = new EventBuilder()</span>
+<span class="fc" id="L408">              .subject(subject)</span>
+<span class="fc" id="L409">              .startDateTime(currentStart)</span>
+<span class="fc" id="L410">              .endDateTime(currentEnd)</span>
+<span class="fc" id="L411">              .seriesId(seriesId)</span>
+<span class="fc" id="L412">              .build();</span>
+<span class="fc" id="L413">          events.add(event);</span>
+<span class="fc" id="L414">          created.add(event);</span>
+<span class="fc" id="L415">          count++;</span>
+<span class="fc bfc" id="L416" title="All 2 branches covered.">          if (count &gt;= maxOccurrences) {</span>
+<span class="fc" id="L417">            break;</span>
+          }
+        }
+      }
+<span class="fc" id="L421">      currentStart = currentStart.plusDays(1);</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">      if (currentEnd != null) {</span>
+<span class="fc" id="L423">        currentEnd = currentEnd.plusDays(1);</span>
+      }
+<span class="fc" id="L425">    }</span>
+<span class="fc" id="L426">    return created;</span>
+  }
+
+  private boolean eventExists(String subject, LocalDateTime start, LocalDateTime end) {
+    LocalDateTime actualStart =
+<span class="fc bfc" id="L431" title="All 2 branches covered.">        (end == null) ? start.toLocalDate().atTime(WorkingHours.START) : start;</span>
+    LocalDateTime actualEnd =
+<span class="fc bfc" id="L433" title="All 2 branches covered.">        (end == null) ? start.toLocalDate().atTime(WorkingHours.END) : end;</span>
+
+<span class="fc" id="L435">    return events.stream().anyMatch(e -&gt;</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">        e.getSubject().equals(subject)</span>
+<span class="fc bfc" id="L437" title="All 2 branches covered.">            &amp;&amp; e.getStartDateTime().equals(actualStart)</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">            &amp;&amp; e.getEndDateTime().equals(actualEnd));</span>
+  }
+
+  private String generateSeriesId() {
+<span class="fc" id="L442">    return &quot;SERIES_&quot; + UUID.randomUUID();</span>
+  }
+
+  private void enforceNoDuplicateOnReplace(Event oldEvent, Event newEvent) {
+<span class="fc bfc" id="L446" title="All 2 branches covered.">    if (!oldEvent.equals(newEvent)</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        &amp;&amp; eventExists(newEvent.getSubject(),</span>
+<span class="fc" id="L448">        newEvent.getStartDateTime(),</span>
+<span class="fc" id="L449">        newEvent.getEndDateTime())) {</span>
+<span class="fc" id="L450">      throw new IllegalArgumentException(&quot;Edit would create duplicate event&quot;);</span>
+    }
+<span class="fc" id="L452">  }</span>
+
+  private void replaceEvent(Event oldEvent, Event newEvent) {
+<span class="fc" id="L455">    int index = events.indexOf(oldEvent);</span>
+<span class="pc bpc" id="L456" title="1 of 2 branches missed.">    if (index &gt;= 0) {</span>
+<span class="fc" id="L457">      events.set(index, newEvent);</span>
+
+<span class="fc" id="L459">      String oldSid = oldEvent.getSeriesId().orElse(null);</span>
+<span class="fc" id="L460">      String newSid = newEvent.getSeriesId().orElse(null);</span>
+
+<span class="fc bfc" id="L462" title="All 2 branches covered.">      if (Objects.equals(oldSid, newSid)) {</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        if (oldSid != null) {</span>
+<span class="fc" id="L464">          seriesIndex.replaceStart(oldSid, oldEvent.getStartDateTime(),</span>
+<span class="fc" id="L465">              newEvent.getStartDateTime());</span>
+        }
+      } else {
+<span class="pc bpc" id="L468" title="1 of 2 branches missed.">        if (oldSid != null) {</span>
+<span class="fc" id="L469">          seriesIndex.remove(oldSid, oldEvent.getStartDateTime());</span>
+        }
+<span class="pc bpc" id="L471" title="1 of 2 branches missed.">        if (newSid != null) {</span>
+<span class="fc" id="L472">          seriesIndex.add(newSid, newEvent.getStartDateTime());</span>
+        }
+      }
+    }
+<span class="fc" id="L476">  }</span>
+
+  private Event applyProperty(Event source, EventProperty property, String newValue) {
+<span class="fc" id="L479">    EventBuilder b = EventBuilder.from(source);</span>
+<span class="fc" id="L480">    property.apply(b, newValue);</span>
+<span class="fc" id="L481">    return b.build();</span>
+  }
+
+  private EventProperty parseProperty(String property) {
+<span class="fc" id="L485">    return EventProperty.fromToken(property);</span>
+  }
+
+  private List&lt;Event&gt; getEventsBySeriesId(String seriesId) {
+<span class="fc" id="L489">    List&lt;LocalDateTime&gt; starts = seriesIndex.starts(seriesId);</span>
+<span class="fc" id="L490">    List&lt;Event&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L491" title="All 2 branches covered.">    for (LocalDateTime s : starts) {</span>
+<span class="pc bpc" id="L492" title="1 of 2 branches missed.">      for (Event e : events) {</span>
+<span class="pc bpc" id="L493" title="1 of 2 branches missed.">        if (e.getSeriesId().map(seriesId::equals).orElse(false)</span>
+<span class="fc bfc" id="L494" title="All 2 branches covered.">            &amp;&amp; e.getStartDateTime().equals(s)) {</span>
+<span class="fc" id="L495">          result.add(e);</span>
+<span class="fc" id="L496">          break;</span>
+        }
+<span class="fc" id="L498">      }</span>
+<span class="fc" id="L499">    }</span>
+<span class="fc" id="L500">    return result;</span>
+  }
+
+  private void convertAllEventsToZone(ZoneId from, ZoneId to) {
+<span class="fc bfc" id="L504" title="All 2 branches covered.">    for (int i = 0; i &lt; events.size(); i++) {</span>
+<span class="fc" id="L505">      Event e = events.get(i);</span>
+<span class="fc" id="L506">      ZonedDateTime s = e.getStartDateTime().atZone(from);</span>
+<span class="fc" id="L507">      ZonedDateTime t = e.getEndDateTime().atZone(from);</span>
+<span class="fc" id="L508">      LocalDateTime newStart = s.withZoneSameInstant(to).toLocalDateTime();</span>
+<span class="fc" id="L509">      LocalDateTime newEnd = t.withZoneSameInstant(to).toLocalDateTime();</span>
+<span class="fc" id="L510">      Event converted = EventBuilder.from(e)</span>
+<span class="fc" id="L511">          .startDateTime(newStart)</span>
+<span class="fc" id="L512">          .endDateTime(newEnd)</span>
+<span class="fc" id="L513">          .build();</span>
+<span class="fc" id="L514">      events.set(i, converted);</span>
+    }
+<span class="fc" id="L516">  }</span>
+
+  @Override
+  public Event copyFrom(Event template, LocalDateTime newStart, LocalDateTime newEnd) {
+<span class="fc bfc" id="L520" title="All 2 branches covered.">    if (eventExists(template.getSubject(), newStart, newEnd)) {</span>
+<span class="fc" id="L521">      throw new IllegalArgumentException(&quot;Duplicate event in destination calendar&quot;);</span>
+    }
+<span class="fc" id="L523">    Event copied = EventBuilder.from(template)</span>
+<span class="fc" id="L524">        .startDateTime(newStart)</span>
+<span class="fc" id="L525">        .endDateTime(newEnd)</span>
+<span class="fc" id="L526">        .build();</span>
+<span class="fc" id="L527">    events.add(copied);</span>
+<span class="fc" id="L528">    copied.getSeriesId().ifPresent(id -&gt; seriesIndex.add(id, copied.getStartDateTime()));</span>
+<span class="fc" id="L529">    return copied;</span>
+  }
+
+  private void validateSeriesInstanceShape(LocalDateTime start,
+                                           LocalDateTime end,
+                                           Set&lt;DayOfWeek&gt; weekdays) {
+<span class="fc bfc" id="L535" title="All 4 branches covered.">    if (end != null &amp;&amp; !start.toLocalDate().equals(end.toLocalDate())) {</span>
+<span class="fc" id="L536">      throw new IllegalArgumentException(&quot;Event series instances must be single-day&quot;);</span>
+    }
+<span class="fc bfc" id="L538" title="All 4 branches covered.">    if (weekdays == null || weekdays.isEmpty()) {</span>
+<span class="fc" id="L539">      throw new IllegalArgumentException(&quot;Weekdays set must not be empty&quot;);</span>
+    }
+<span class="fc" id="L541">  }</span>
+
+  private String coerceValue(EventProperty property,
+                             LocalDateTime newDateTime,
+                             String newText) {
+<span class="fc bfc" id="L546" title="All 4 branches covered.">    boolean isTime = property == EventProperty.START || property == EventProperty.END;</span>
+<span class="fc bfc" id="L547" title="All 4 branches covered.">    String val = isTime ? (newDateTime == null ? null : newDateTime.toString()) : newText;</span>
+<span class="fc bfc" id="L548" title="All 2 branches covered.">    if (val == null) {</span>
+<span class="fc" id="L549">      throw new IllegalArgumentException(&quot;New value required for property &quot; + property);</span>
+    }
+<span class="fc" id="L551">    return val;</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

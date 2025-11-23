@@ -1,0 +1,1026 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommandParser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar.controller</a> &gt; <span class="el_source">CommandParser.java</span></div><h1>CommandParser.java</h1><pre class="source lang-java linenums">package calendar.controller;
+
+import calendar.CalendarProperty;
+import calendar.EventProperty;
+import calendar.WorkingHours;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Parses user command strings into structured commands with typed enums.
+ * Behavior and error messages are preserved.
+ */
+<span class="fc" id="L21">public class CommandParser {</span>
+
+<span class="fc" id="L23">  private static final DateTimeFormatter DATE_FMT =</span>
+<span class="fc" id="L24">      DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L25">  private static final DateTimeFormatter DATETIME_FMT =</span>
+<span class="fc" id="L26">      DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd'T'HH:mm&quot;);</span>
+<span class="fc" id="L27">  private static final LocalTime ALL_DAY_START = WorkingHours.START;</span>
+<span class="fc" id="L28">  private static final LocalTime ALL_DAY_END = WorkingHours.END;</span>
+
+<span class="fc" id="L30">  private static final Pattern FLAG_NAME = Pattern.compile(</span>
+      &quot;--name\\s+(\&quot;[^\&quot;]+\&quot;|\\S+)&quot;, Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L32">  private static final Pattern FLAG_TZ = Pattern.compile(</span>
+      &quot;--timezone\\s+(\\S+)&quot;, Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L34">  private static final Pattern FLAG_PROP = Pattern.compile(</span>
+      &quot;--property\\s+(\\S+)\\s+(\&quot;[^\&quot;]+\&quot;|\\S+)&quot;, Pattern.CASE_INSENSITIVE);
+
+  /**
+   * Immutable value for a parsed command. Legacy string fields remain for compatibility.
+   */
+  public static class Command {
+    private final String type;
+    private final String subject;
+    private final LocalDateTime startDateTime;
+    private final LocalDateTime endDateTime;
+    private final Set&lt;DayOfWeek&gt; weekdays;
+    private final Integer occurrences;
+    private final LocalDate untilDate;
+    private final String property;
+    private final String newValue;
+    private final String editScope;
+    private final String fileName;
+    private final String calendarName;
+    private final String timezoneId;
+    private final String targetCalendar;
+    private final LocalDateTime targetDateTime;
+    private final LocalDate day;
+    private final LocalDate rangeStart;
+    private final LocalDate rangeEnd;
+
+    private final CommandType typeEnum;
+    private final EditScope editScopeEnum;
+    private final EventProperty eventPropertyEnum;
+    private final CalendarProperty calendarPropertyEnum;
+
+    /**
+     * Builds an immutable {@link Command} instance from the populated builder values.
+     * Fields that are irrelevant for the parsed command remain {@code null}; enums capture
+     * normalized values alongside legacy string tokens for compatibility with existing
+     * consumers.
+     *
+     * @param builder source of parsed tokens and enums for this command
+     */
+<span class="fc" id="L73">    private Command(Builder builder) {</span>
+<span class="fc" id="L74">      this.type = builder.type;</span>
+<span class="fc" id="L75">      this.subject = builder.subject;</span>
+<span class="fc" id="L76">      this.startDateTime = builder.startDateTime;</span>
+<span class="fc" id="L77">      this.endDateTime = builder.endDateTime;</span>
+<span class="fc" id="L78">      this.weekdays = builder.weekdays;</span>
+<span class="fc" id="L79">      this.occurrences = builder.occurrences;</span>
+<span class="fc" id="L80">      this.untilDate = builder.untilDate;</span>
+<span class="fc" id="L81">      this.property = builder.property;</span>
+<span class="fc" id="L82">      this.newValue = builder.newValue;</span>
+<span class="fc" id="L83">      this.editScope = builder.editScope;</span>
+<span class="fc" id="L84">      this.fileName = builder.fileName;</span>
+<span class="fc" id="L85">      this.calendarName = builder.calendarName;</span>
+<span class="fc" id="L86">      this.timezoneId = builder.timezoneId;</span>
+<span class="fc" id="L87">      this.targetCalendar = builder.targetCalendar;</span>
+<span class="fc" id="L88">      this.targetDateTime = builder.targetDateTime;</span>
+<span class="fc" id="L89">      this.day = builder.day;</span>
+<span class="fc" id="L90">      this.rangeStart = builder.rangeStart;</span>
+<span class="fc" id="L91">      this.rangeEnd = builder.rangeEnd;</span>
+<span class="fc" id="L92">      this.typeEnum = builder.typeEnum;</span>
+<span class="fc" id="L93">      this.editScopeEnum = builder.editScopeEnum;</span>
+<span class="fc" id="L94">      this.eventPropertyEnum = builder.eventPropertyEnum;</span>
+<span class="fc" id="L95">      this.calendarPropertyEnum = builder.calendarPropertyEnum;</span>
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Creates a builder seeded with both the legacy string type and the normalized enum value.
+     *
+     * @param type     raw command type token (e.g., &quot;create_calendar&quot;, &quot;edit&quot;)
+     * @param typeEnum normalized command type enum
+     * @return configured builder instance
+     */
+    public static Builder builder(String type, CommandType typeEnum) {
+<span class="fc" id="L106">      return new Builder(type, typeEnum);</span>
+    }
+
+    /**
+     * Creates a builder seeded only with the legacy string type token.
+     *
+     * @param type raw command type token (e.g., &quot;create_calendar&quot;, &quot;edit&quot;)
+     * @return configured builder instance
+     */
+    public static Builder builder(String type) {
+<span class="fc" id="L116">      return new Builder(type, null);</span>
+    }
+
+    /**
+     * Fluent builder used to populate the appropriate fields for a parsed command variant.
+     * Unset fields remain {@code null} in the resulting {@link Command}.
+     */
+    public static class Builder {
+      private final String type;
+      private final CommandType typeEnum;
+      private String subject;
+      private LocalDateTime startDateTime;
+      private LocalDateTime endDateTime;
+      private Set&lt;DayOfWeek&gt; weekdays;
+      private Integer occurrences;
+      private LocalDate untilDate;
+      private String property;
+      private String newValue;
+      private String editScope;
+      private String fileName;
+      private String calendarName;
+      private String timezoneId;
+      private String targetCalendar;
+      private LocalDateTime targetDateTime;
+      private LocalDate day;
+      private LocalDate rangeStart;
+      private LocalDate rangeEnd;
+      private EditScope editScopeEnum;
+      private EventProperty eventPropertyEnum;
+      private CalendarProperty calendarPropertyEnum;
+
+<span class="fc" id="L147">      private Builder(String type, CommandType typeEnum) {</span>
+<span class="fc" id="L148">        this.type = type;</span>
+<span class="fc" id="L149">        this.typeEnum = typeEnum;</span>
+<span class="fc" id="L150">      }</span>
+
+      /**
+       * Specifies the subject for the command.
+       *
+       * @param subject subject string
+       * @return builder instance
+       */
+      public Builder subject(String subject) {
+<span class="fc" id="L159">        this.subject = subject;</span>
+<span class="fc" id="L160">        return this;</span>
+      }
+
+      /**
+       * Sets the start date/time in ISO-8601.
+       *
+       * @param startDateTime start date-time
+       * @return builder instance
+       */
+      public Builder startDateTime(LocalDateTime startDateTime) {
+<span class="fc" id="L170">        this.startDateTime = startDateTime;</span>
+<span class="fc" id="L171">        return this;</span>
+      }
+
+      /**
+       * Sets the end date/time in ISO-8601.
+       *
+       * @param endDateTime end date-time
+       * @return builder instance
+       */
+      public Builder endDateTime(LocalDateTime endDateTime) {
+<span class="fc" id="L181">        this.endDateTime = endDateTime;</span>
+<span class="fc" id="L182">        return this;</span>
+      }
+
+      /**
+       * Specifies recurring weekdays for an event.
+       *
+       * @param weekdays recurrence days
+       * @return builder instance
+       */
+      public Builder weekdays(Set&lt;DayOfWeek&gt; weekdays) {
+<span class="fc" id="L192">        this.weekdays = weekdays;</span>
+<span class="fc" id="L193">        return this;</span>
+      }
+
+      /**
+       * Sets the number of occurrences for recurrence.
+       *
+       * @param occurrences count of occurrences
+       * @return builder instance
+       */
+      public Builder occurrences(Integer occurrences) {
+<span class="fc" id="L203">        this.occurrences = occurrences;</span>
+<span class="fc" id="L204">        return this;</span>
+      }
+
+      /**
+       * Sets the recurrence end date.
+       *
+       * @param untilDate inclusive end date
+       * @return builder instance
+       */
+      public Builder untilDate(LocalDate untilDate) {
+<span class="fc" id="L214">        this.untilDate = untilDate;</span>
+<span class="fc" id="L215">        return this;</span>
+      }
+
+      /**
+       * Specifies the property being edited.
+       *
+       * @param property textual property name
+       * @return builder instance
+       */
+      public Builder property(String property) {
+<span class="fc" id="L225">        this.property = property;</span>
+<span class="fc" id="L226">        return this;</span>
+      }
+
+      /**
+       * Sets a new string value for the property being edited.
+       *
+       * @param newValue replacement value
+       * @return builder instance
+       */
+      public Builder newValue(String newValue) {
+<span class="fc" id="L236">        this.newValue = newValue;</span>
+<span class="fc" id="L237">        return this;</span>
+      }
+
+      /**
+       * Specifies the textual edit scope.
+       *
+       * @param editScope scope string
+       * @return builder instance
+       */
+      public Builder editScope(String editScope) {
+<span class="fc" id="L247">        this.editScope = editScope;</span>
+<span class="fc" id="L248">        return this;</span>
+      }
+
+      /**
+       * Sets the export file name.
+       *
+       * @param fileName output file name
+       * @return builder instance
+       */
+      public Builder fileName(String fileName) {
+<span class="fc" id="L258">        this.fileName = fileName;</span>
+<span class="fc" id="L259">        return this;</span>
+      }
+
+      /**
+       * Sets the calendar name for create/edit/use commands.
+       *
+       * @param calendarName calendar identifier
+       * @return builder instance
+       */
+      public Builder calendarName(String calendarName) {
+<span class="fc" id="L269">        this.calendarName = calendarName;</span>
+<span class="fc" id="L270">        return this;</span>
+      }
+
+      /**
+       * Specifies the timezone identifier for calendar operations.
+       *
+       * @param timezoneId IANA timezone id
+       * @return builder instance
+       */
+      public Builder timezoneId(String timezoneId) {
+<span class="fc" id="L280">        this.timezoneId = timezoneId;</span>
+<span class="fc" id="L281">        return this;</span>
+      }
+
+      /**
+       * Sets the target calendar for copy commands.
+       *
+       * @param targetCalendar target calendar name
+       * @return builder instance
+       */
+      public Builder targetCalendar(String targetCalendar) {
+<span class="fc" id="L291">        this.targetCalendar = targetCalendar;</span>
+<span class="fc" id="L292">        return this;</span>
+      }
+
+      /**
+       * Specifies the target start date/time for copies.
+       *
+       * @param targetDateTime destination date-time
+       * @return builder instance
+       */
+      public Builder targetDateTime(LocalDateTime targetDateTime) {
+<span class="fc" id="L302">        this.targetDateTime = targetDateTime;</span>
+<span class="fc" id="L303">        return this;</span>
+      }
+
+      /**
+       * Sets a specific day for daily copy operations.
+       *
+       * @param day date to copy
+       * @return builder instance
+       */
+      public Builder day(LocalDate day) {
+<span class="fc" id="L313">        this.day = day;</span>
+<span class="fc" id="L314">        return this;</span>
+      }
+
+      /**
+       * Specifies the start of a date range.
+       *
+       * @param rangeStart inclusive range start
+       * @return builder instance
+       */
+      public Builder rangeStart(LocalDate rangeStart) {
+<span class="fc" id="L324">        this.rangeStart = rangeStart;</span>
+<span class="fc" id="L325">        return this;</span>
+      }
+
+      /**
+       * Specifies the end of a date range.
+       *
+       * @param rangeEnd inclusive range end
+       * @return builder instance
+       */
+      public Builder rangeEnd(LocalDate rangeEnd) {
+<span class="fc" id="L335">        this.rangeEnd = rangeEnd;</span>
+<span class="fc" id="L336">        return this;</span>
+      }
+
+      /**
+       * Sets the parsed edit scope enum.
+       *
+       * @param editScopeEnum edit scope
+       * @return builder instance
+       */
+      public Builder editScopeEnum(EditScope editScopeEnum) {
+<span class="fc" id="L346">        this.editScopeEnum = editScopeEnum;</span>
+<span class="fc" id="L347">        return this;</span>
+      }
+
+      /**
+       * Sets the parsed event property enum.
+       *
+       * @param eventPropertyEnum event property
+       * @return builder instance
+       */
+      public Builder eventPropertyEnum(EventProperty eventPropertyEnum) {
+<span class="fc" id="L357">        this.eventPropertyEnum = eventPropertyEnum;</span>
+<span class="fc" id="L358">        return this;</span>
+      }
+
+      /**
+       * Sets the parsed calendar property enum.
+       *
+       * @param calendarPropertyEnum calendar property
+       * @return builder instance
+       */
+      public Builder calendarPropertyEnum(CalendarProperty calendarPropertyEnum) {
+<span class="fc" id="L368">        this.calendarPropertyEnum = calendarPropertyEnum;</span>
+<span class="fc" id="L369">        return this;</span>
+      }
+
+      /**
+       * Finalizes the builder into an immutable {@link Command} instance.
+       *
+       * @return constructed {@link Command}
+       */
+      public Command build() {
+<span class="fc" id="L378">        return new Command(this);</span>
+      }
+    }
+
+    public String getType() {
+<span class="fc" id="L383">      return type;</span>
+    }
+
+    public String getSubject() {
+<span class="fc" id="L387">      return subject;</span>
+    }
+
+    public LocalDateTime getStartDateTime() {
+<span class="fc" id="L391">      return startDateTime;</span>
+    }
+
+    public LocalDateTime getEndDateTime() {
+<span class="fc" id="L395">      return endDateTime;</span>
+    }
+
+    public Set&lt;DayOfWeek&gt; getWeekdays() {
+<span class="fc" id="L399">      return weekdays;</span>
+    }
+
+    public Integer getOccurrences() {
+<span class="fc" id="L403">      return occurrences;</span>
+    }
+
+    public LocalDate getUntilDate() {
+<span class="fc" id="L407">      return untilDate;</span>
+    }
+
+    public String getProperty() {
+<span class="fc" id="L411">      return property;</span>
+    }
+
+    public String getNewValue() {
+<span class="fc" id="L415">      return newValue;</span>
+    }
+
+    public String getEditScope() {
+<span class="fc" id="L419">      return editScope;</span>
+    }
+
+    public String getFileName() {
+<span class="fc" id="L423">      return fileName;</span>
+    }
+
+    public String getCalendarName() {
+<span class="fc" id="L427">      return calendarName;</span>
+    }
+
+    public String getTimezoneId() {
+<span class="fc" id="L431">      return timezoneId;</span>
+    }
+
+    public String getTargetCalendar() {
+<span class="fc" id="L435">      return targetCalendar;</span>
+    }
+
+    public LocalDateTime getTargetDateTime() {
+<span class="fc" id="L439">      return targetDateTime;</span>
+    }
+
+    public LocalDate getDay() {
+<span class="fc" id="L443">      return day;</span>
+    }
+
+    public LocalDate getRangeStart() {
+<span class="fc" id="L447">      return rangeStart;</span>
+    }
+
+    public LocalDate getRangeEnd() {
+<span class="fc" id="L451">      return rangeEnd;</span>
+    }
+
+    public CommandType getTypeEnum() {
+<span class="fc" id="L455">      return typeEnum;</span>
+    }
+
+    public EditScope getEditScopeEnum() {
+<span class="fc" id="L459">      return editScopeEnum;</span>
+    }
+
+    public EventProperty getEventPropertyEnum() {
+<span class="fc" id="L463">      return eventPropertyEnum;</span>
+    }
+
+    public CalendarProperty getCalendarPropertyEnum() {
+<span class="fc" id="L467">      return calendarPropertyEnum;</span>
+    }
+  }
+
+  /**
+   * Parses one user input line into a structured {@link Command}.
+   *
+   * &lt;p&gt;Trims the input, determines the command family by prefix, and
+   * delegates to specialized parsers. On invalid or unsupported
+   * syntax, it throws an {@link IllegalArgumentException} with a
+   * user-readable message.
+   * &lt;/p&gt;
+   *
+   * &lt;p&gt;Recognized forms include:
+   * {@code exit},
+   * {@code create calendar ...},
+   * {@code edit calendar ...},
+   * {@code use calendar ...},
+   * {@code export cal ...},
+   * {@code show status on ...},
+   * {@code print events on ...},
+   * {@code print events from ...},
+   * {@code copy event ...},
+   * {@code copy events on ...},
+   * {@code copy events between ...},
+   * {@code create event ...},
+   * and {@code edit event|events|series ...}.
+   * &lt;/p&gt;
+   *
+   * @param line raw user input; leading/trailing whitespace ignored
+   * @return a populated {@link Command} describing the action to run
+   * @throws IllegalArgumentException if {@code line} is null/empty
+   *                                  or the detected command has invalid syntax
+   */
+
+  public Command parse(String line) {
+<span class="fc bfc" id="L503" title="All 4 branches covered.">    if (line == null || line.trim().isEmpty()) {</span>
+<span class="fc" id="L504">      throw new IllegalArgumentException(&quot;Empty command&quot;);</span>
+    }
+<span class="fc" id="L506">    String trimmed = line.trim();</span>
+<span class="fc" id="L507">    String lower = trimmed.toLowerCase();</span>
+
+<span class="fc" id="L509">    Command simple = parseSimpleCommands(trimmed, lower);</span>
+<span class="fc bfc" id="L510" title="All 2 branches covered.">    if (simple != null) {</span>
+<span class="fc" id="L511">      return simple;</span>
+    }
+
+<span class="fc" id="L514">    Command calendarCommand = parseCalendarCommands(trimmed, lower);</span>
+<span class="fc bfc" id="L515" title="All 2 branches covered.">    if (calendarCommand != null) {</span>
+<span class="fc" id="L516">      return calendarCommand;</span>
+    }
+
+<span class="fc" id="L519">    Command printCommand = parsePrintCommands(trimmed, lower);</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">    if (printCommand != null) {</span>
+<span class="fc" id="L521">      return printCommand;</span>
+    }
+
+<span class="fc" id="L524">    Command copyCommand = parseCopyCommands(trimmed, lower);</span>
+<span class="fc bfc" id="L525" title="All 2 branches covered.">    if (copyCommand != null) {</span>
+<span class="fc" id="L526">      return copyCommand;</span>
+    }
+
+<span class="fc bfc" id="L529" title="All 2 branches covered.">    if (lower.startsWith(&quot;create event &quot;)) {</span>
+<span class="fc" id="L530">      return parseCreateEvent(trimmed.substring(&quot;create event &quot;.length()));</span>
+    }
+<span class="fc bfc" id="L532" title="All 2 branches covered.">    if (lower.startsWith(&quot;edit event &quot;)</span>
+<span class="fc bfc" id="L533" title="All 2 branches covered.">        || lower.startsWith(&quot;edit events &quot;)</span>
+<span class="fc bfc" id="L534" title="All 2 branches covered.">        || lower.startsWith(&quot;edit series &quot;)) {</span>
+<span class="fc" id="L535">      return parseEditCommand(trimmed);</span>
+    }
+<span class="fc" id="L537">    throw new IllegalArgumentException(&quot;Unknown command: &quot; + trimmed);</span>
+  }
+
+  private Command parseSimpleCommands(String trimmed, String lower) {
+<span class="fc bfc" id="L541" title="All 2 branches covered.">    if (lower.equals(&quot;exit&quot;)) {</span>
+<span class="fc" id="L542">      return Command.builder(&quot;exit&quot;, CommandType.EXIT).build();</span>
+    }
+<span class="fc bfc" id="L544" title="All 2 branches covered.">    if (lower.startsWith(&quot;export cal &quot;)) {</span>
+<span class="fc" id="L545">      String fileName = trimmed.substring(&quot;export cal &quot;.length()).trim();</span>
+<span class="fc" id="L546">      return Command.builder(&quot;export&quot;, CommandType.EXPORT)</span>
+<span class="fc" id="L547">          .fileName(fileName)</span>
+<span class="fc" id="L548">          .build();</span>
+    }
+<span class="fc bfc" id="L550" title="All 2 branches covered.">    if (lower.startsWith(&quot;show status on &quot;)) {</span>
+<span class="fc" id="L551">      String dateTimeStr = trimmed.substring(&quot;show status on &quot;.length()).trim();</span>
+<span class="fc" id="L552">      LocalDateTime dateTime = parseDateTime(dateTimeStr);</span>
+<span class="fc" id="L553">      return Command.builder(&quot;status&quot;, CommandType.STATUS)</span>
+<span class="fc" id="L554">          .startDateTime(dateTime)</span>
+<span class="fc" id="L555">          .build();</span>
+    }
+<span class="fc" id="L557">    return null;</span>
+  }
+
+  private Command parseCalendarCommands(String trimmed, String lower) {
+<span class="fc bfc" id="L561" title="All 2 branches covered.">    if (lower.startsWith(&quot;create calendar &quot;)) {</span>
+<span class="fc" id="L562">      return parseCreateCalendar(trimmed);</span>
+    }
+<span class="fc bfc" id="L564" title="All 2 branches covered.">    if (lower.startsWith(&quot;edit calendar &quot;)) {</span>
+<span class="fc" id="L565">      return parseEditCalendar(trimmed);</span>
+    }
+<span class="fc bfc" id="L567" title="All 2 branches covered.">    if (lower.startsWith(&quot;use calendar &quot;)) {</span>
+<span class="fc" id="L568">      return parseUseCalendar(trimmed);</span>
+    }
+<span class="fc" id="L570">    return null;</span>
+  }
+
+  private Command parsePrintCommands(String trimmed, String lower) {
+<span class="fc bfc" id="L574" title="All 2 branches covered.">    if (lower.startsWith(&quot;print events on &quot;)) {</span>
+<span class="fc" id="L575">      String dateStr = trimmed.substring(&quot;print events on &quot;.length()).trim();</span>
+<span class="fc" id="L576">      LocalDate date = parseDate(dateStr);</span>
+<span class="fc" id="L577">      return Command.builder(&quot;print_on&quot;, CommandType.PRINT_ON)</span>
+<span class="fc" id="L578">          .startDateTime(date.atStartOfDay())</span>
+<span class="fc" id="L579">          .build();</span>
+    }
+<span class="fc bfc" id="L581" title="All 2 branches covered.">    if (lower.startsWith(&quot;print events from &quot;)) {</span>
+<span class="fc" id="L582">      return parsePrintRange(trimmed);</span>
+    }
+<span class="fc" id="L584">    return null;</span>
+  }
+
+  private Command parseCopyCommands(String trimmed, String lower) {
+<span class="fc bfc" id="L588" title="All 2 branches covered.">    if (lower.startsWith(&quot;copy event &quot;)) {</span>
+<span class="fc" id="L589">      return parseCopyEvent(trimmed);</span>
+    }
+<span class="fc bfc" id="L591" title="All 2 branches covered.">    if (lower.startsWith(&quot;copy events on &quot;)) {</span>
+<span class="fc" id="L592">      return parseCopyOnDate(trimmed);</span>
+    }
+<span class="fc bfc" id="L594" title="All 2 branches covered.">    if (lower.startsWith(&quot;copy events between &quot;)) {</span>
+<span class="fc" id="L595">      return parseCopyBetween(trimmed);</span>
+    }
+<span class="fc" id="L597">    return null;</span>
+  }
+
+  private Command parseCreateCalendar(String line) {
+<span class="fc" id="L601">    Matcher nameM = FLAG_NAME.matcher(line);</span>
+<span class="fc" id="L602">    Matcher tzM = FLAG_TZ.matcher(line);</span>
+<span class="fc bfc" id="L603" title="All 4 branches covered.">    if (!nameM.find() || !tzM.find()) {</span>
+<span class="fc" id="L604">      throw new IllegalArgumentException(</span>
+          &quot;Invalid syntax. Expected: create calendar --name &lt;name&gt; --timezone &lt;area/location&gt;&quot;);
+    }
+<span class="fc" id="L607">    String name = unquote(nameM.group(1));</span>
+<span class="fc" id="L608">    String tz = tzM.group(1);</span>
+<span class="fc" id="L609">    return Command.builder(&quot;create_calendar&quot;, CommandType.CREATE_CALENDAR)</span>
+<span class="fc" id="L610">        .calendarName(name)</span>
+<span class="fc" id="L611">        .timezoneId(tz)</span>
+<span class="fc" id="L612">        .build();</span>
+  }
+
+  private Command parseEditCalendar(String line) {
+<span class="fc" id="L616">    Matcher nameM = FLAG_NAME.matcher(line);</span>
+<span class="fc" id="L617">    Matcher propM = FLAG_PROP.matcher(line);</span>
+<span class="fc bfc" id="L618" title="All 4 branches covered.">    if (!nameM.find() || !propM.find()) {</span>
+<span class="fc" id="L619">      throw new IllegalArgumentException(</span>
+          &quot;Invalid syntax. Expected: edit calendar --name &lt;name&gt;&quot;
+              +
+              &quot; --property &lt;name|timezone&gt; &lt;value&gt;&quot;);
+    }
+<span class="fc" id="L624">    String name = unquote(nameM.group(1));</span>
+<span class="fc" id="L625">    String prop = propM.group(1).toLowerCase();</span>
+<span class="fc" id="L626">    String val = unquote(propM.group(2));</span>
+    CalendarProperty cp;
+<span class="fc bfc" id="L628" title="All 2 branches covered.">    if (&quot;name&quot;.equals(prop)) {</span>
+<span class="fc" id="L629">      cp = CalendarProperty.NAME;</span>
+    } else {
+<span class="fc bfc" id="L631" title="All 2 branches covered.">      if (&quot;timezone&quot;.equals(prop)) {</span>
+<span class="fc" id="L632">        cp = CalendarProperty.TIMEZONE;</span>
+      } else {
+<span class="fc" id="L634">        throw new IllegalArgumentException(&quot;Unknown calendar property: &quot; + prop);</span>
+      }
+    }
+<span class="fc" id="L637">    return Command.builder(&quot;edit_calendar&quot;, CommandType.EDIT_CALENDAR)</span>
+<span class="fc" id="L638">        .property(prop)</span>
+<span class="fc" id="L639">        .newValue(val)</span>
+<span class="fc" id="L640">        .calendarName(name)</span>
+<span class="fc" id="L641">        .calendarPropertyEnum(cp)</span>
+<span class="fc" id="L642">        .build();</span>
+  }
+
+  private Command parseUseCalendar(String line) {
+<span class="fc" id="L646">    Matcher nameM = FLAG_NAME.matcher(line);</span>
+<span class="pc bpc" id="L647" title="1 of 2 branches missed.">    if (!nameM.find()) {</span>
+<span class="nc" id="L648">      throw new IllegalArgumentException(</span>
+          &quot;Invalid syntax. Expected: use calendar --name &lt;name&gt;&quot;);
+    }
+<span class="fc" id="L651">    String name = unquote(nameM.group(1));</span>
+<span class="fc" id="L652">    return Command.builder(&quot;use_calendar&quot;, CommandType.USE_CALENDAR)</span>
+<span class="fc" id="L653">        .calendarName(name)</span>
+<span class="fc" id="L654">        .build();</span>
+  }
+
+  private Command parsePrintRange(String trimmed) {
+<span class="fc" id="L658">    Pattern pattern = Pattern.compile(</span>
+        &quot;print events from (\\S+) to (\\S+)&quot;, Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L660">    Matcher matcher = pattern.matcher(trimmed);</span>
+<span class="fc bfc" id="L661" title="All 2 branches covered.">    if (!matcher.matches()) {</span>
+<span class="fc" id="L662">      throw new IllegalArgumentException(&quot;Invalid print range syntax&quot;);</span>
+    }
+<span class="fc" id="L664">    LocalDateTime start = parseDateTime(matcher.group(1));</span>
+<span class="fc" id="L665">    LocalDateTime end = parseDateTime(matcher.group(2));</span>
+<span class="fc" id="L666">    return Command.builder(&quot;print_range&quot;, CommandType.PRINT_RANGE)</span>
+<span class="fc" id="L667">        .startDateTime(start)</span>
+<span class="fc" id="L668">        .endDateTime(end)</span>
+<span class="fc" id="L669">        .build();</span>
+  }
+
+  private Command parseCreateEvent(String args) {
+    String subject;
+    String remaining;
+
+<span class="fc bfc" id="L676" title="All 2 branches covered.">    if (args.startsWith(&quot;\&quot;&quot;)) {</span>
+<span class="fc" id="L677">      int endQuote = args.indexOf(&quot;\&quot;&quot;, 1);</span>
+<span class="fc bfc" id="L678" title="All 2 branches covered.">      if (endQuote == -1) {</span>
+<span class="fc" id="L679">        throw new IllegalArgumentException(&quot;Unclosed quote in subject&quot;);</span>
+      }
+<span class="fc" id="L681">      subject = args.substring(1, endQuote);</span>
+<span class="fc" id="L682">      remaining = args.substring(endQuote + 1).trim();</span>
+<span class="fc" id="L683">    } else {</span>
+<span class="fc" id="L684">      int fromIdx = indexOfIgnoreCase(args, &quot; from &quot;);</span>
+<span class="fc" id="L685">      int onIdx = indexOfIgnoreCase(args, &quot; on &quot;);</span>
+<span class="pc bpc" id="L686" title="3 of 6 branches missed.">      if (fromIdx &gt; 0 &amp;&amp; (onIdx == -1 || fromIdx &lt; onIdx)) {</span>
+<span class="fc" id="L687">        subject = args.substring(0, fromIdx);</span>
+<span class="fc" id="L688">        remaining = args.substring(fromIdx).trim();</span>
+<span class="fc bfc" id="L689" title="All 2 branches covered.">      } else if (onIdx &gt; 0) {</span>
+<span class="fc" id="L690">        subject = args.substring(0, onIdx);</span>
+<span class="fc" id="L691">        remaining = args.substring(onIdx).trim();</span>
+      } else {
+<span class="fc" id="L693">        throw new IllegalArgumentException(&quot;Invalid syntax: expected 'from' or 'on'&quot;);</span>
+      }
+    }
+
+<span class="fc bfc" id="L697" title="All 2 branches covered.">    if (remaining.toLowerCase().startsWith(&quot;on &quot;)) {</span>
+<span class="fc" id="L698">      return parseAllDayEvent(subject, remaining.substring(3).trim());</span>
+    }
+<span class="fc bfc" id="L700" title="All 2 branches covered.">    if (remaining.toLowerCase().startsWith(&quot;from &quot;)) {</span>
+<span class="fc" id="L701">      return parseTimedEvent(subject, remaining.substring(5).trim());</span>
+    }
+<span class="fc" id="L703">    throw new IllegalArgumentException(&quot;Invalid create event syntax&quot;);</span>
+  }
+
+  private Command parseAllDayEvent(String subject, String args) {
+<span class="fc" id="L707">    String[] parts = args.split(&quot;\\s+&quot;);</span>
+<span class="fc" id="L708">    LocalDate date = parseDate(parts[0]);</span>
+<span class="fc" id="L709">    LocalDateTime start = date.atTime(ALL_DAY_START);</span>
+<span class="fc" id="L710">    LocalDateTime end = date.atTime(ALL_DAY_END);</span>
+
+<span class="fc bfc" id="L712" title="All 2 branches covered.">    if (parts.length == 1) {</span>
+<span class="fc" id="L713">      return Command.builder(&quot;create_single&quot;, CommandType.CREATE_SINGLE)</span>
+<span class="fc" id="L714">          .subject(subject)</span>
+<span class="fc" id="L715">          .startDateTime(start)</span>
+<span class="fc" id="L716">          .endDateTime(end)</span>
+<span class="fc" id="L717">          .build();</span>
+    }
+
+<span class="fc bfc" id="L720" title="All 4 branches covered.">    if (parts.length &gt;= 4 &amp;&amp; parts[1].equalsIgnoreCase(&quot;repeats&quot;)) {</span>
+<span class="fc" id="L721">      Set&lt;DayOfWeek&gt; wd = parseWeekdays(parts[2]);</span>
+
+<span class="fc bfc" id="L723" title="All 4 branches covered.">      if (parts[3].equalsIgnoreCase(&quot;for&quot;) &amp;&amp; parts.length &gt;= 6) {</span>
+<span class="fc" id="L724">        int occurrences = Integer.parseInt(parts[4]);</span>
+<span class="fc" id="L725">        return Command.builder(&quot;create_series&quot;, CommandType.CREATE_SERIES)</span>
+<span class="fc" id="L726">            .subject(subject)</span>
+<span class="fc" id="L727">            .startDateTime(start)</span>
+<span class="fc" id="L728">            .endDateTime(end)</span>
+<span class="fc" id="L729">            .weekdays(wd)</span>
+<span class="fc" id="L730">            .occurrences(occurrences)</span>
+<span class="fc" id="L731">            .build();</span>
+      }
+
+<span class="fc bfc" id="L734" title="All 4 branches covered.">      if (parts[3].equalsIgnoreCase(&quot;until&quot;) &amp;&amp; parts.length &gt;= 5) {</span>
+<span class="fc" id="L735">        LocalDate untilDate = parseDate(parts[4]);</span>
+<span class="fc" id="L736">        return Command.builder(&quot;create_series_until&quot;, CommandType.CREATE_SERIES_UNTIL)</span>
+<span class="fc" id="L737">            .subject(subject)</span>
+<span class="fc" id="L738">            .startDateTime(start)</span>
+<span class="fc" id="L739">            .endDateTime(end)</span>
+<span class="fc" id="L740">            .weekdays(wd)</span>
+<span class="fc" id="L741">            .untilDate(untilDate)</span>
+<span class="fc" id="L742">            .build();</span>
+      }
+    }
+
+<span class="fc" id="L746">    throw new IllegalArgumentException(&quot;Invalid all-day event syntax&quot;);</span>
+  }
+
+  private Command parseTimedEvent(String subject, String args) {
+<span class="fc" id="L750">    Pattern pattern = Pattern.compile(</span>
+        &quot;(\\S+)\\s+to\\s+(\\S+)(?:\\s+repeats\\s+(\\S+)\\s+(for|until)\\s+(\\S+)(?:\\s+times)?)?&quot;);
+<span class="fc" id="L752">    Matcher matcher = pattern.matcher(args);</span>
+
+<span class="fc bfc" id="L754" title="All 2 branches covered.">    if (!matcher.matches()) {</span>
+<span class="fc" id="L755">      throw new IllegalArgumentException(&quot;Invalid timed event syntax&quot;);</span>
+    }
+
+<span class="fc" id="L758">    LocalDateTime start = parseDateTime(matcher.group(1));</span>
+<span class="fc" id="L759">    LocalDateTime end = parseDateTime(matcher.group(2));</span>
+
+<span class="fc bfc" id="L761" title="All 2 branches covered.">    if (matcher.group(3) == null) {</span>
+<span class="fc" id="L762">      return Command.builder(&quot;create_single&quot;, CommandType.CREATE_SINGLE)</span>
+<span class="fc" id="L763">          .subject(subject)</span>
+<span class="fc" id="L764">          .startDateTime(start)</span>
+<span class="fc" id="L765">          .endDateTime(end)</span>
+<span class="fc" id="L766">          .build();</span>
+    }
+
+<span class="fc" id="L769">    Set&lt;DayOfWeek&gt; wd = parseWeekdays(matcher.group(3));</span>
+<span class="fc" id="L770">    String repeatType = matcher.group(4);</span>
+<span class="fc" id="L771">    String repeatValue = matcher.group(5);</span>
+
+<span class="fc bfc" id="L773" title="All 2 branches covered.">    if (repeatType.equalsIgnoreCase(&quot;for&quot;)) {</span>
+<span class="fc" id="L774">      int occurrences = Integer.parseInt(repeatValue);</span>
+<span class="fc" id="L775">      return Command.builder(&quot;create_series&quot;, CommandType.CREATE_SERIES)</span>
+<span class="fc" id="L776">          .subject(subject)</span>
+<span class="fc" id="L777">          .startDateTime(start)</span>
+<span class="fc" id="L778">          .endDateTime(end)</span>
+<span class="fc" id="L779">          .weekdays(wd)</span>
+<span class="fc" id="L780">          .occurrences(occurrences)</span>
+<span class="fc" id="L781">          .build();</span>
+    }
+
+<span class="fc" id="L784">    LocalDate untilDate = parseDate(repeatValue);</span>
+<span class="fc" id="L785">    return Command.builder(&quot;create_series_until&quot;, CommandType.CREATE_SERIES_UNTIL)</span>
+<span class="fc" id="L786">        .subject(subject)</span>
+<span class="fc" id="L787">        .startDateTime(start)</span>
+<span class="fc" id="L788">        .endDateTime(end)</span>
+<span class="fc" id="L789">        .weekdays(wd)</span>
+<span class="fc" id="L790">        .untilDate(untilDate)</span>
+<span class="fc" id="L791">        .build();</span>
+  }
+
+  private Command parseEditCommand(String line) {
+    String scope;
+    String remaining;
+
+<span class="fc bfc" id="L798" title="All 2 branches covered.">    if (line.toLowerCase().startsWith(&quot;edit event &quot;)) {</span>
+<span class="fc" id="L799">      scope = &quot;event&quot;;</span>
+<span class="fc" id="L800">      remaining = line.substring(&quot;edit event &quot;.length());</span>
+<span class="fc bfc" id="L801" title="All 2 branches covered.">    } else if (line.toLowerCase().startsWith(&quot;edit events &quot;)) {</span>
+<span class="fc" id="L802">      scope = &quot;events&quot;;</span>
+<span class="fc" id="L803">      remaining = line.substring(&quot;edit events &quot;.length());</span>
+    } else {
+<span class="fc" id="L805">      scope = &quot;series&quot;;</span>
+<span class="fc" id="L806">      remaining = line.substring(&quot;edit series &quot;.length());</span>
+    }
+
+<span class="fc" id="L809">    String[] parts = remaining.split(&quot;\\s+&quot;, 2);</span>
+<span class="fc bfc" id="L810" title="All 2 branches covered.">    if (parts.length &lt; 2) {</span>
+<span class="fc" id="L811">      throw new IllegalArgumentException(&quot;Invalid edit syntax&quot;);</span>
+    }
+
+<span class="fc" id="L814">    final String property = parts[0];</span>
+<span class="fc" id="L815">    String rest = parts[1];</span>
+    String subject;
+    String afterSubject;
+
+<span class="fc bfc" id="L819" title="All 2 branches covered.">    if (rest.startsWith(&quot;\&quot;&quot;)) {</span>
+<span class="fc" id="L820">      int endQuote = rest.indexOf(&quot;\&quot;&quot;, 1);</span>
+<span class="fc bfc" id="L821" title="All 2 branches covered.">      if (endQuote == -1) {</span>
+<span class="fc" id="L822">        throw new IllegalArgumentException(&quot;Unclosed quote&quot;);</span>
+      }
+<span class="fc" id="L824">      subject = rest.substring(1, endQuote);</span>
+<span class="fc" id="L825">      afterSubject = rest.substring(endQuote + 1).trim();</span>
+<span class="fc" id="L826">    } else {</span>
+<span class="fc" id="L827">      int fromIdx = rest.toLowerCase().indexOf(&quot; from &quot;);</span>
+<span class="fc bfc" id="L828" title="All 2 branches covered.">      if (fromIdx == -1) {</span>
+<span class="fc" id="L829">        throw new IllegalArgumentException(&quot;Missing 'from'&quot;);</span>
+      }
+<span class="fc" id="L831">      subject = rest.substring(0, fromIdx).trim();</span>
+<span class="fc" id="L832">      afterSubject = rest.substring(fromIdx).trim();</span>
+    }
+
+<span class="fc" id="L835">    Pattern pattern = Pattern.compile(</span>
+        &quot;from\\s+(\\S+)\\s+with\\s+(.+)&quot;, Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L837">    Matcher matcher = pattern.matcher(afterSubject);</span>
+
+<span class="fc bfc" id="L839" title="All 2 branches covered.">    if (!matcher.matches()) {</span>
+<span class="fc" id="L840">      throw new IllegalArgumentException(</span>
+          &quot;Invalid edit syntax. Expected: from &lt;dateTime&gt; with &lt;value&gt;&quot;);
+    }
+
+<span class="fc" id="L844">    LocalDateTime start = parseDateTime(matcher.group(1));</span>
+<span class="fc" id="L845">    String newValue = stripQuotes(matcher.group(2).trim());</span>
+
+<span class="fc" id="L847">    EditScope scopeEnum = EditScope.fromToken(scope);</span>
+<span class="fc" id="L848">    EventProperty ep = EventProperty.fromToken(property);</span>
+
+<span class="fc" id="L850">    return Command.builder(&quot;edit&quot;, CommandType.EDIT)</span>
+<span class="fc" id="L851">        .subject(subject)</span>
+<span class="fc" id="L852">        .startDateTime(start)</span>
+<span class="fc" id="L853">        .property(property)</span>
+<span class="fc" id="L854">        .newValue(newValue)</span>
+<span class="fc" id="L855">        .editScope(scope)</span>
+<span class="fc" id="L856">        .editScopeEnum(scopeEnum)</span>
+<span class="fc" id="L857">        .eventPropertyEnum(ep)</span>
+<span class="fc" id="L858">        .build();</span>
+  }
+
+  private Command parseCopyEvent(String line) {
+<span class="fc" id="L862">    String body = line.substring(&quot;copy event &quot;.length()).trim();</span>
+
+    String subject;
+    String rest;
+<span class="fc bfc" id="L866" title="All 2 branches covered.">    if (body.startsWith(&quot;\&quot;&quot;)) {</span>
+<span class="fc" id="L867">      int endQuote = body.indexOf(&quot;\&quot;&quot;, 1);</span>
+<span class="fc bfc" id="L868" title="All 2 branches covered.">      if (endQuote == -1) {</span>
+<span class="fc" id="L869">        throw new IllegalArgumentException(&quot;Unclosed quote in event name&quot;);</span>
+      }
+<span class="fc" id="L871">      subject = body.substring(1, endQuote);</span>
+<span class="fc" id="L872">      rest = body.substring(endQuote + 1).trim();</span>
+<span class="fc" id="L873">    } else {</span>
+<span class="fc" id="L874">      int onIdx = body.toLowerCase().indexOf(&quot; on &quot;);</span>
+<span class="fc bfc" id="L875" title="All 2 branches covered.">      if (onIdx &lt; 0) {</span>
+<span class="fc" id="L876">        throw new IllegalArgumentException(&quot;Missing 'on' for copy event&quot;);</span>
+      }
+<span class="fc" id="L878">      subject = body.substring(0, onIdx).trim();</span>
+<span class="fc" id="L879">      rest = body.substring(onIdx).trim();</span>
+    }
+
+<span class="fc" id="L882">    Pattern p = Pattern.compile(</span>
+        &quot;on\\s+(\\S+)\\s+--target\\s+(\&quot;[^\&quot;]+\&quot;|\\S+)\\s+to\\s+(\\S+)&quot;,
+        Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L885">    Matcher m = p.matcher(rest);</span>
+<span class="fc bfc" id="L886" title="All 2 branches covered.">    if (!m.matches()) {</span>
+<span class="fc" id="L887">      throw new IllegalArgumentException(&quot;Invalid copy event syntax&quot;);</span>
+    }
+
+<span class="fc" id="L890">    LocalDateTime sourceStart = parseDateTime(m.group(1));</span>
+<span class="fc" id="L891">    String targetCal = unquote(m.group(2));</span>
+<span class="fc" id="L892">    LocalDateTime targetStart = parseDateTime(m.group(3));</span>
+
+<span class="fc" id="L894">    return Command.builder(&quot;copy_event&quot;, CommandType.COPY_EVENT)</span>
+<span class="fc" id="L895">        .subject(subject)</span>
+<span class="fc" id="L896">        .startDateTime(sourceStart)</span>
+<span class="fc" id="L897">        .targetCalendar(targetCal)</span>
+<span class="fc" id="L898">        .targetDateTime(targetStart)</span>
+<span class="fc" id="L899">        .build();</span>
+  }
+
+  private Command parseCopyOnDate(String line) {
+<span class="fc" id="L903">    Pattern p = Pattern.compile(</span>
+        &quot;copy\\s+events\\s+on\\s+(\\S+)\\s+--target\\s+(\&quot;[^\&quot;]+\&quot;|\\S+)\\s+to\\s+(\\S+)&quot;,
+        Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L906">    Matcher m = p.matcher(line);</span>
+<span class="fc bfc" id="L907" title="All 2 branches covered.">    if (!m.matches()) {</span>
+<span class="fc" id="L908">      throw new IllegalArgumentException(&quot;Invalid copy events on syntax&quot;);</span>
+    }
+
+<span class="fc" id="L911">    LocalDate sourceDate = parseDate(m.group(1));</span>
+<span class="fc" id="L912">    String targetCal = unquote(m.group(2));</span>
+<span class="fc" id="L913">    LocalDate targetDate = parseDate(m.group(3));</span>
+
+<span class="fc" id="L915">    return Command.builder(&quot;copy_on_date&quot;, CommandType.COPY_ON_DATE)</span>
+<span class="fc" id="L916">        .targetCalendar(targetCal)</span>
+<span class="fc" id="L917">        .targetDateTime(targetDate.atStartOfDay())</span>
+<span class="fc" id="L918">        .day(sourceDate)</span>
+<span class="fc" id="L919">        .build();</span>
+  }
+
+  private Command parseCopyBetween(String line) {
+<span class="fc" id="L923">    Pattern p = Pattern.compile(</span>
+        &quot;copy\\s+events\\s+between\\s+(\\S+)\\s+and\\s+(\\S+)\\s&quot;
+            +
+            &quot;+--target\\s+(\&quot;[^\&quot;]+\&quot;|\\S+)\\s+to\\s+(\\S+)&quot;,
+        Pattern.CASE_INSENSITIVE);
+<span class="fc" id="L928">    Matcher m = p.matcher(line);</span>
+<span class="fc bfc" id="L929" title="All 2 branches covered.">    if (!m.matches()) {</span>
+<span class="fc" id="L930">      throw new IllegalArgumentException(&quot;Invalid copy events between syntax&quot;);</span>
+    }
+
+<span class="fc" id="L933">    LocalDate start = parseDate(m.group(1));</span>
+<span class="fc" id="L934">    LocalDate end = parseDate(m.group(2));</span>
+<span class="fc" id="L935">    String targetCal = unquote(m.group(3));</span>
+<span class="fc" id="L936">    LocalDate targetStart = parseDate(m.group(4));</span>
+
+<span class="fc" id="L938">    return Command.builder(&quot;copy_between&quot;, CommandType.COPY_BETWEEN)</span>
+<span class="fc" id="L939">        .targetCalendar(targetCal)</span>
+<span class="fc" id="L940">        .targetDateTime(targetStart.atStartOfDay())</span>
+<span class="fc" id="L941">        .rangeStart(start)</span>
+<span class="fc" id="L942">        .rangeEnd(end)</span>
+<span class="fc" id="L943">        .build();</span>
+  }
+
+  private LocalDate parseDate(String dateStr) {
+    try {
+<span class="fc" id="L948">      return LocalDate.parse(dateStr, DATE_FMT);</span>
+<span class="fc" id="L949">    } catch (DateTimeParseException e) {</span>
+<span class="fc" id="L950">      throw new IllegalArgumentException(</span>
+          &quot;Invalid date: &quot; + dateStr + &quot;. Expected format: YYYY-MM-DD&quot;);
+    }
+  }
+
+  private LocalDateTime parseDateTime(String dateTimeStr) {
+    try {
+<span class="fc" id="L957">      return LocalDateTime.parse(dateTimeStr, DATETIME_FMT);</span>
+<span class="fc" id="L958">    } catch (DateTimeParseException e) {</span>
+<span class="fc" id="L959">      throw new IllegalArgumentException(</span>
+          &quot;Invalid datetime: &quot; + dateTimeStr + &quot;. Expected format: YYYY-MM-DDTHH:mm&quot;);
+    }
+  }
+
+  private Set&lt;DayOfWeek&gt; parseWeekdays(String token) {
+<span class="fc bfc" id="L965" title="All 4 branches covered.">    if (token == null || token.isEmpty()) {</span>
+<span class="fc" id="L966">      throw new IllegalArgumentException(&quot;Missing weekday pattern&quot;);</span>
+    }
+<span class="fc" id="L968">    EnumSet&lt;DayOfWeek&gt; set = EnumSet.noneOf(DayOfWeek.class);</span>
+<span class="fc bfc" id="L969" title="All 2 branches covered.">    for (char c : token.toUpperCase().toCharArray()) {</span>
+<span class="fc bfc" id="L970" title="All 8 branches covered.">      switch (c) {</span>
+        case 'M':
+<span class="fc" id="L972">          set.add(DayOfWeek.MONDAY);</span>
+<span class="fc" id="L973">          break;</span>
+        case 'T':
+<span class="fc" id="L975">          set.add(DayOfWeek.TUESDAY);</span>
+<span class="fc" id="L976">          break;</span>
+        case 'W':
+<span class="fc" id="L978">          set.add(DayOfWeek.WEDNESDAY);</span>
+<span class="fc" id="L979">          break;</span>
+        case 'R':
+<span class="fc" id="L981">          set.add(DayOfWeek.THURSDAY);</span>
+<span class="fc" id="L982">          break;</span>
+        case 'F':
+<span class="fc" id="L984">          set.add(DayOfWeek.FRIDAY);</span>
+<span class="fc" id="L985">          break;</span>
+        case 'S':
+<span class="fc" id="L987">          set.add(DayOfWeek.SATURDAY);</span>
+<span class="fc" id="L988">          break;</span>
+        case 'U':
+<span class="fc" id="L990">          set.add(DayOfWeek.SUNDAY);</span>
+<span class="fc" id="L991">          break;</span>
+        default:
+<span class="fc" id="L993">          throw new IllegalArgumentException(&quot;Invalid weekday letter: &quot; + c);</span>
+      }
+    }
+<span class="fc" id="L996">    return set;</span>
+  }
+
+  private static String unquote(String s) {
+<span class="pc bpc" id="L1000" title="1 of 2 branches missed.">    if (s == null) {</span>
+<span class="nc" id="L1001">      return null;</span>
+    }
+<span class="fc" id="L1003">    String t = s.trim();</span>
+<span class="pc bpc" id="L1004" title="2 of 6 branches missed.">    if (t.length() &gt;= 2 &amp;&amp; t.startsWith(&quot;\&quot;&quot;) &amp;&amp; t.endsWith(&quot;\&quot;&quot;)) {</span>
+<span class="fc" id="L1005">      return t.substring(1, t.length() - 1);</span>
+    }
+<span class="fc" id="L1007">    return t;</span>
+  }
+
+  private static String stripQuotes(String s) {
+<span class="pc bpc" id="L1011" title="2 of 4 branches missed.">    if (s == null || s.length() &lt; 2) {</span>
+<span class="nc" id="L1012">      return s;</span>
+    }
+<span class="pc bpc" id="L1014" title="1 of 4 branches missed.">    if (s.startsWith(&quot;\&quot;&quot;) &amp;&amp; s.endsWith(&quot;\&quot;&quot;)) {</span>
+<span class="fc" id="L1015">      return s.substring(1, s.length() - 1);</span>
+    }
+<span class="fc" id="L1017">    return s;</span>
+  }
+
+  private static int indexOfIgnoreCase(String haystack, String needle) {
+<span class="fc" id="L1021">    String h = haystack.toLowerCase();</span>
+<span class="fc" id="L1022">    String n = needle.toLowerCase();</span>
+<span class="fc" id="L1023">    return h.indexOf(n);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

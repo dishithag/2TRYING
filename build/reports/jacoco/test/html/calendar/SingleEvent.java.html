@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SingleEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar</a> &gt; <span class="el_source">SingleEvent.java</span></div><h1>SingleEvent.java</h1><pre class="source lang-java linenums">package calendar;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+/**
+ * Immutable implementation of an {@link Event}.
+ * If {@code end} is omitted, the event is treated as an all-day entry
+ * using {@link WorkingHours#START} and {@link WorkingHours#END}.
+ */
+public class SingleEvent implements Event {
+
+  private final String subject;
+  private final LocalDateTime startDateTime;
+  private final LocalDateTime endDateTime;
+  private final String description;
+  private final String location;
+  private final boolean isPublic;
+  private final String seriesId;
+
+  /**
+   * Creates an event with optional end; if {@code end} is {@code null},
+   * it becomes an all-day event on the start date.
+   *
+   * @param subject the event subject
+   * @param start   start date/time (required)
+   * @param end     end date/time, or {@code null} to default to working hours
+   * @throws IllegalArgumentException if subject is blank, start is null,
+   *                                  or end is before start
+   */
+  public SingleEvent(String subject, LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L33">    this(subject, start, end, &quot;&quot;, &quot;&quot;, true, null);</span>
+<span class="fc" id="L34">  }</span>
+
+  /**
+   * Full constructor used when specifying all optional fields.
+   *
+   * @param subject   subject text
+   * @param start     start date/time (required)
+   * @param end       end date/time, or {@code null} to default to working hours
+   * @param description description text (may be empty)
+   * @param location  location text (may be empty)
+   * @param isPublic  visibility flag
+   * @param seriesId  series identifier or {@code null} if not part of a series
+   * @throws IllegalArgumentException if subject is blank, start is null,
+   *                                  or end is before start
+   */
+  public SingleEvent(String subject, LocalDateTime start, LocalDateTime end,
+<span class="fc" id="L50">                     String description, String location, boolean isPublic, String seriesId) {</span>
+<span class="fc bfc" id="L51" title="All 4 branches covered.">    if (subject == null || subject.isEmpty()) {</span>
+<span class="fc" id="L52">      throw new IllegalArgumentException(&quot;Event subject cannot be null or empty&quot;);</span>
+    }
+<span class="fc bfc" id="L54" title="All 2 branches covered.">    if (start == null) {</span>
+<span class="fc" id="L55">      throw new IllegalArgumentException(&quot;Start date/time cannot be null&quot;);</span>
+    }
+
+<span class="fc" id="L58">    this.subject = subject;</span>
+<span class="fc" id="L59">    this.description = description;</span>
+<span class="fc" id="L60">    this.location = location;</span>
+<span class="fc" id="L61">    this.isPublic = isPublic;</span>
+<span class="fc" id="L62">    this.seriesId = seriesId;</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">    if (end == null) {</span>
+<span class="fc" id="L65">      LocalDate d = start.toLocalDate();</span>
+<span class="fc" id="L66">      this.startDateTime = d.atTime(WorkingHours.START);</span>
+<span class="fc" id="L67">      this.endDateTime = d.atTime(WorkingHours.END);</span>
+<span class="fc" id="L68">    } else {</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      if (end.isBefore(start)) {</span>
+<span class="fc" id="L70">        throw new IllegalArgumentException(&quot;End date/time cannot be before start date/time&quot;);</span>
+      }
+<span class="fc" id="L72">      this.startDateTime = start;</span>
+<span class="fc" id="L73">      this.endDateTime = end;</span>
+    }
+<span class="fc" id="L75">  }</span>
+
+  @Override
+  public String getSubject() {
+<span class="fc" id="L79">    return subject;</span>
+  }
+
+  @Override
+  public LocalDateTime getStartDateTime() {
+<span class="fc" id="L84">    return startDateTime;</span>
+  }
+
+  @Override
+  public LocalDateTime getEndDateTime() {
+<span class="fc" id="L89">    return endDateTime;</span>
+  }
+
+  @Override
+  public Optional&lt;String&gt; getDescription() {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">    return description.isEmpty() ? Optional.empty() : Optional.of(description);</span>
+  }
+
+  @Override
+  public Optional&lt;String&gt; getLocation() {
+<span class="fc bfc" id="L99" title="All 2 branches covered.">    return location.isEmpty() ? Optional.empty() : Optional.of(location);</span>
+  }
+
+  @Override
+  public boolean isPublic() {
+<span class="fc" id="L104">    return isPublic;</span>
+  }
+
+  @Override
+  public boolean isAllDayEvent() {
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    return startDateTime.toLocalTime().equals(WorkingHours.START)</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        &amp;&amp; endDateTime.toLocalTime().equals(WorkingHours.END)</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        &amp;&amp; startDateTime.toLocalDate().equals(endDateTime.toLocalDate());</span>
+  }
+
+  @Override
+  public boolean isSeriesPart() {
+<span class="fc bfc" id="L116" title="All 2 branches covered.">    return seriesId != null;</span>
+  }
+
+  @Override
+  public Optional&lt;String&gt; getSeriesId() {
+<span class="fc" id="L121">    return Optional.ofNullable(seriesId);</span>
+  }
+
+  @Override
+  public String toString() {
+<span class="fc" id="L126">    return String.format(&quot;%s starting on %s at %s, ending on %s at %s%s&quot;,</span>
+        subject,
+<span class="fc" id="L128">        startDateTime.toLocalDate(),</span>
+<span class="fc" id="L129">        startDateTime.toLocalTime(),</span>
+<span class="fc" id="L130">        endDateTime.toLocalDate(),</span>
+<span class="fc" id="L131">        endDateTime.toLocalTime(),</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        location.isEmpty() ? &quot;&quot; : &quot; at &quot; + location);</span>
+  }
+
+  @Override
+  public boolean equals(Object o) {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">    if (this == o) {</span>
+<span class="fc" id="L138">      return true;</span>
+    }
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">    if (!(o instanceof Event)) {</span>
+<span class="nc" id="L141">      return false;</span>
+    }
+<span class="fc" id="L143">    Event that = (Event) o;</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">    return subject.equals(that.getSubject())</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        &amp;&amp; startDateTime.equals(that.getStartDateTime())</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        &amp;&amp; endDateTime.equals(that.getEndDateTime());</span>
+  }
+
+  @Override
+  public int hashCode() {
+<span class="fc" id="L151">    int r = subject.hashCode();</span>
+<span class="fc" id="L152">    r = 31 * r + startDateTime.hashCode();</span>
+<span class="fc" id="L153">    r = 31 * r + endDateTime.hashCode();</span>
+<span class="fc" id="L154">    return r;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

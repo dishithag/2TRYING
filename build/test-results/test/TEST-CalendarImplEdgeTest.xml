@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarImplEdgeTest" tests="60" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.014">
+  <properties/>
+  <testcase name="testEditEventsFromDate_withEventPropertyEnum_nullValue_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testAddCopied_addsEvent" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testEditEventsFromDate_endPropertyNullDateTime_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testReplaceEvent_differentSeries_bothNonNull_callsRemoveAndAdd" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_nonStart_callsEnforceNoDuplicate" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_nonSeries_callsEnforceNoDuplicate" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_null_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_preservesEventProperties" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="parseProperty_unknown_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_preservesDescriptionAndLocation" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="parseProperty_null_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEvent_nullSubject_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testRename_blank_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testConstructor_nullZoneId_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_withEventPropertyEnum_text" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEvent_endBeforeStart_throws" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testSetZoneId_sameZone_noConversion" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSingleEvent_multipleMatchesThrows" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_nullSeriesId_returnsEarly" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_zeroOccurrences_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCopyFrom_noSeriesId_doesNotAddToIndex" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testReplaceEvent_sameSeries_bothNull" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testFindEvents_matchingStartOnly" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_withEventPropertyEnum_endDateTime" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testEditSeries_nonSeries_callsEnforceNoDuplicate" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_withEventPropertyEnum_endProperty" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_withEventPropertyEnum_dateTime" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateSeries_invalidWeekday" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEvent_withSeriesId_addsToIndex" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_onNonSeriesEditsOne" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_endPropertyNullDateTime_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_onNonSeriesEditsOnce" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testRebuildSeriesIndex_sortsStarts" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_callsRebuildSeriesIndex" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testCreateEventSeriesUntil_untilBeforeStart_givesEmpty" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testReplaceEvent_sameSeries_bothNonNull_callsReplaceStart" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCopyFrom_duplicate_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testFindEvents_startMatches_endDoesNotMatch_filtered" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_convertsSeries" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEvent_noSeriesId_doesNotAddToIndex" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testEditSeries_start_callsEnforceNoDuplicate" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testConstructor_blankName_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testConstructor_validParameters_succeeds" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testCreateEvent_duplicateWithNullEnd" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditSeries_withEventPropertyEnum_nullValue_throws" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testFindEvents_subjectMismatch_returnsEmpty" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testConstructor_nullName_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_convertsEventTimes" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEvent_withEventPropertyEnum_nullValue_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testRename_validName_succeeds" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_withEventPropertyEnum_text" classname="CalendarImplEdgeTest" time="0.002"/>
+  <testcase name="testGetEventsBySeriesId_nullStarts_returnsNewList" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_series_callsEnforceNoDuplicate" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_withEventPropertyEnum_dateTime" classname="CalendarImplEdgeTest" time="0.001"/>
+  <testcase name="testCreateEventSeriesUntil_addsToSeriesIndex" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_filtersNonMatchingSeriesId" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEvent_withEventPropertyEnum_text" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testRename_null_throws" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testEditEvent_withEventPropertyEnum_dateTime" classname="CalendarImplEdgeTest" time="0.0"/>
+  <testcase name="testSetZoneId_updatesCalendarZone" classname="CalendarImplEdgeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

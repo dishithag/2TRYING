@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="InteractiveControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.002">
+  <properties/>
+  <testcase name="testDisplayWelcome_showsAllMessages" classname="InteractiveControllerTest" time="0.0"/>
+  <testcase name="testInteractiveFlow" classname="InteractiveControllerTest" time="0.0"/>
+  <testcase name="testHandleError_displaysErrorMessage" classname="InteractiveControllerTest" time="0.0"/>
+  <testcase name="testHandleExit_displaysGoodbye" classname="InteractiveControllerTest" time="0.0"/>
+  <testcase name="testShowPrompt_displaysPrompt" classname="InteractiveControllerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

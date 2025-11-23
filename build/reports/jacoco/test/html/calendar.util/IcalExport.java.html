@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IcalExport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">calendar</a> &gt; <a href="index.source.html" class="el_package">calendar.util</a> &gt; <span class="el_source">IcalExport.java</span></div><h1>IcalExport.java</h1><pre class="source lang-java linenums">package calendar.util;
+
+import calendar.Calendar;
+import calendar.Event;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Exports calendars to iCalendar (.ics / .ical). Times are emitted in UTC.
+ */
+public final class IcalExport {
+
+<span class="fc" id="L23">  private static final DateTimeFormatter UTC_TS =</span>
+<span class="fc" id="L24">      DateTimeFormatter.ofPattern(&quot;yyyyMMdd'T'HHmmss'Z'&quot;).withZone(ZoneOffset.UTC);</span>
+<span class="fc" id="L25">  private static final DateTimeFormatter DATE_ONLY =</span>
+<span class="fc" id="L26">      DateTimeFormatter.ofPattern(&quot;yyyyMMdd&quot;);</span>
+
+  private IcalExport() {}
+
+  /**
+   * Writes the calendar to an iCalendar file.
+   *
+   * @param calendar calendar to export
+   * @param filePath destination path (ends with .ics or .ical)
+   * @return absolute path written
+   * @throws IOException on write failure
+   */
+  public static String exportToIcs(Calendar calendar, String filePath) throws IOException {
+<span class="fc" id="L39">    Path path = Paths.get(filePath);</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">    if (path.getParent() != null) {</span>
+<span class="fc" id="L41">      Files.createDirectories(path.getParent());</span>
+    }
+
+<span class="fc" id="L44">    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(path))) {</span>
+<span class="fc" id="L45">      out.println(&quot;BEGIN:VCALENDAR&quot;);</span>
+<span class="fc" id="L46">      out.println(&quot;PRODID:-//PDP Calendar//EN&quot;);</span>
+<span class="fc" id="L47">      out.println(&quot;VERSION:2.0&quot;);</span>
+<span class="fc" id="L48">      out.println(&quot;CALSCALE:GREGORIAN&quot;);</span>
+<span class="fc" id="L49">      out.println(&quot;METHOD:PUBLISH&quot;);</span>
+
+<span class="fc" id="L51">      List&lt;Event&gt; events = calendar.getAllEvents();</span>
+<span class="fc" id="L52">      ZoneId zone = calendar.getZoneId();</span>
+<span class="fc" id="L53">      ZonedDateTime nowUtc = ZonedDateTime.now(ZoneOffset.UTC);</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">      for (Event e : events) {</span>
+<span class="fc" id="L56">        out.println(&quot;BEGIN:VEVENT&quot;);</span>
+<span class="fc" id="L57">        out.println(&quot;UID:&quot; + uidFor(e, calendar));</span>
+<span class="fc" id="L58">        out.println(&quot;DTSTAMP:&quot; + UTC_TS.format(nowUtc));</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (e.isAllDayEvent()) {</span>
+<span class="fc" id="L61">          LocalDate startDate = e.getStartDateTime().toLocalDate();</span>
+<span class="fc" id="L62">          LocalDate endDateExclusive = e.getEndDateTime().toLocalDate().plusDays(1);</span>
+<span class="fc" id="L63">          out.println(&quot;DTSTART;VALUE=DATE:&quot; + DATE_ONLY.format(startDate));</span>
+<span class="fc" id="L64">          out.println(&quot;DTEND;VALUE=DATE:&quot; + DATE_ONLY.format(endDateExclusive));</span>
+<span class="fc" id="L65">        } else {</span>
+<span class="fc" id="L66">          ZonedDateTime startUtc =</span>
+<span class="fc" id="L67">              e.getStartDateTime().atZone(zone).withZoneSameInstant(ZoneOffset.UTC);</span>
+<span class="fc" id="L68">          ZonedDateTime endUtc =</span>
+<span class="fc" id="L69">              e.getEndDateTime().atZone(zone).withZoneSameInstant(ZoneOffset.UTC);</span>
+<span class="fc" id="L70">          out.println(&quot;DTSTART:&quot; + UTC_TS.format(startUtc));</span>
+<span class="fc" id="L71">          out.println(&quot;DTEND:&quot; + UTC_TS.format(endUtc));</span>
+        }
+
+<span class="fc" id="L74">        out.println(&quot;SUMMARY:&quot; + escape(e.getSubject()));</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        out.println(&quot;CLASS:&quot; + (e.isPublic() ? &quot;PUBLIC&quot; : &quot;PRIVATE&quot;));</span>
+<span class="fc" id="L76">        e.getDescription().ifPresent(d -&gt; out.println(&quot;DESCRIPTION:&quot; + escape(d)));</span>
+<span class="fc" id="L77">        e.getLocation().ifPresent(l -&gt; out.println(&quot;LOCATION:&quot; + escape(l)));</span>
+<span class="fc" id="L78">        out.println(&quot;END:VEVENT&quot;);</span>
+<span class="fc" id="L79">      }</span>
+
+<span class="fc" id="L81">      out.println(&quot;END:VCALENDAR&quot;);</span>
+    }
+
+<span class="fc" id="L84">    return path.toAbsolutePath().toString();</span>
+  }
+
+  private static String uidFor(Event e, Calendar cal) {
+<span class="fc" id="L88">    String seed =</span>
+<span class="fc" id="L89">        cal.getName() + &quot;|&quot; + e.getSubject() + &quot;|&quot; + e.getStartDateTime() + &quot;|&quot;</span>
+<span class="fc" id="L90">            + e.getEndDateTime();</span>
+<span class="fc" id="L91">    return UUID.nameUUIDFromBytes(seed.getBytes()).toString() + &quot;@pdp-calendar&quot;;</span>
+  }
+
+  private static String escape(String s) {
+<span class="fc" id="L95">    String x = s.replace(&quot;\\&quot;, &quot;\\\\&quot;)</span>
+<span class="fc" id="L96">        .replace(&quot;\n&quot;, &quot;\\n&quot;)</span>
+<span class="fc" id="L97">        .replace(&quot;,&quot;, &quot;\\,&quot;)</span>
+<span class="fc" id="L98">        .replace(&quot;;&quot;, &quot;\\;&quot;);</span>
+<span class="fc" id="L99">    return fold75(x);</span>
+  }
+
+  private static String fold75(String s) {
+<span class="fc bfc" id="L103" title="All 2 branches covered.">    if (s.length() &lt;= 75) {</span>
+<span class="fc" id="L104">      return s;</span>
+    }
+<span class="fc" id="L106">    StringBuilder b = new StringBuilder();</span>
+<span class="fc" id="L107">    int i = 0;</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">    while (i &lt; s.length()) {</span>
+<span class="fc" id="L109">      int end = Math.min(i + 75, s.length());</span>
+<span class="fc" id="L110">      b.append(s, i, end);</span>
+<span class="fc" id="L111">      i = end;</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">      if (i &lt; s.length()) {</span>
+<span class="fc" id="L113">        b.append(&quot;\r\n &quot;);</span>
+      }
+<span class="fc" id="L115">    }</span>
+<span class="fc" id="L116">    return b.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

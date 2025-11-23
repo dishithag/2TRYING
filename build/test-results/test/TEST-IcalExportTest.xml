@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="IcalExportTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.009">
+  <properties/>
+  <testcase name="testExportToIcs_veryLongSubject_multipleFolds" classname="IcalExportTest" time="0.002"/>
+  <testcase name="testExportToIcs_privateEvent" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_escapesSpecialChars" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_allDayEvent" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_withDescriptionAndLocation" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExport_ics_returnsAbsolutePath" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_noParentDirectory" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_veryLongSubject" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_createsFile" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_exactly75Chars_noFold" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_containsUniqueUid" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_timedEvent" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_containsHeaders" classname="IcalExportTest" time="0.001"/>
+  <testcase name="testExportToIcs_allHeadersPresent" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_seventySixChars_doesFold" classname="IcalExportTest" time="0.0"/>
+  <testcase name="testExportToIcs_containsDtstamp" classname="IcalExportTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

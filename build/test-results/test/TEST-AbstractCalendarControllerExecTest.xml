@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="AbstractCalendarControllerExecTest" tests="27" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.066">
+  <properties/>
+  <testcase name="testHandleCopySingle_duplicateExists_returns0" classname="AbstractCalendarControllerExecTest" time="0.028"/>
+  <testcase name="testExecuteExport" classname="AbstractCalendarControllerExecTest" time="0.011"/>
+  <testcase name="testExecutePrintRange" classname="AbstractCalendarControllerExecTest" time="0.002"/>
+  <testcase name="testHandleEditSingle" classname="AbstractCalendarControllerExecTest" time="0.002"/>
+  <testcase name="testHandleCopySingle_multipleMatches_throws" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testExecuteStatus" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testHandleCopyBetween_partialSkip" classname="AbstractCalendarControllerExecTest" time="0.005"/>
+  <testcase name="testHandleCopyOnDate_skipsDuplicates" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEditSeriesScope" classname="AbstractCalendarControllerExecTest" time="0.004"/>
+  <testcase name="testExecuteCreateSingle" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleCopyOnDate" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testHandleCopySingle" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleCopyBetween_skipsSameSubjectSameDay" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEditCalendar_timezone" classname="AbstractCalendarControllerExecTest" time="0.002"/>
+  <testcase name="testHandleEditCalendar_name" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testExecuteCreateSeriesForTimes" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEdit_endProperty_parsesDateTime" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testExecuteUnknownCommandType" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testExecuteCreateCalendar" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEditCalendar_unknownProperty" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testExecuteCreateSeriesUntil" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testExecutePrintOn" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEditUnknownScope" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testHandleCopyBetween" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testConstructorNullArguments" classname="AbstractCalendarControllerExecTest" time="0.0"/>
+  <testcase name="testHandleEdit_startProperty_parsesDateTime" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <testcase name="testHandleEditEventsScope" classname="AbstractCalendarControllerExecTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

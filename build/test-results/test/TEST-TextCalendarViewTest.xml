@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TextCalendarViewTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.002">
+  <properties/>
+  <testcase name="testDisplayStatus_busy" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayError" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayEvents_withLocation" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayStatus_available" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayEvents_singleEvent" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayPrompt" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayEvents_emptyList" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testConstructor_nullStream_throws" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayEvents_multipleEvents" classname="TextCalendarViewTest" time="0.001"/>
+  <testcase name="testDisplayMessage" classname="TextCalendarViewTest" time="0.0"/>
+  <testcase name="testDisplayEvents_nullList" classname="TextCalendarViewTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CalendarCreateTest" tests="64" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.011">
+  <properties/>
+  <testcase name="testGetEventsBySeriesId_nonExistent_returnsEmpty" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testGetEventsInRange_inclusive" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEvent_nullEnd_setsEndTo1700" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testGetEventsBySeriesIdNotFound" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventToString" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderWithAllFields" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_weekend" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testEventHashCodeConsistency" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventEndProperty" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testParsePropertyNull" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeriesUntil_multiDay_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testIsAllDayEvent_multiDay_returnsFalse" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEvent_duplicateSameSubjectStartEnd_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_singleDayConstraint_violationThrows" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testEventToStringWithLocation" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateSeriesInvalidWeekday" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testCreateEventSeries_emptyWeekdays_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventsFromDate_changeStartTime_onTailOnly" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_saturday" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="eventBuilder_full_success_keepsFields" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderEndBeforeStart" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditSingleEventLocation" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="eventBuilder_noEnd_defaultsToFivePm" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditSeries_updateLocation_allInSeries" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testCreateEventSeries_nullWeekdays_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_multiDayEvent_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventSubjectProperty" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testSingleEvent_endBeforeStartWithNonNullEnd_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_nullEnd_createsAllDaySeries" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="eventBuilder_missingStart_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_sunday" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderNullEndDateTime" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditSingleEventDescription" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventStatusToPublic" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testCopyFrom_withSeriesEvent_addsToIndex" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderFrom_withEmptyOptionals" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventHashCode" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeriesUntil_emptyWeekdays_throws" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="eventBuilder_endBeforeStart_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testIsAllDayEvent_trueAllDay_returnsTrue" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderValidStartAndEnd" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testIsAllDayEvent_wrongEndTime_returnsFalse" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeriesUntil_stopsAtEndDate" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testMultiDayEventAppearsOnAllDays" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventStatusProperty" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderFrom_copiesAllFields" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEventBuilderWhitespaceSubject" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testCreateEvent_withExplicitEnd_usesGivenTimes" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeriesUntil_nullWeekdays_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testParsePropertyUnknown" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testIsAllDayEvent_wrongTimes_returnsFalse" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testSingleEventNullSubject" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEventSeries_occurrencesAndDays" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testEditEventStartProperty" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testGetEventsOnDate_countsPerDay" classname="CalendarCreateTest" time="0.001"/>
+  <testcase name="testCopyFrom_withoutSeriesEvent_noSeriesId" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testSingleEventEmptySubject" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testIsBusyAt_trueAndFalse" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="eventBuilder_allDay_sets8To5" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testSingleEventNullEndUsesStartDate" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="eventBuilder_missingSubject_throws" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateEvent_middayStart_nullEnd_setsEndTo1700" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testSingleEventNullStartDate" classname="CalendarCreateTest" time="0.0"/>
+  <testcase name="testCreateTimedEventIsNotAllDay" classname="CalendarCreateTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ExportUtilTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.012">
+  <properties/>
+  <testcase name="testExport_csvUppercase" classname="ExportUtilTest" time="0.001"/>
+  <testcase name="testExport_csv" classname="ExportUtilTest" time="0.001"/>
+  <testcase name="testExport_ics" classname="ExportUtilTest" time="0.009"/>
+  <testcase name="testExport_unsupportedExtension_throws" classname="ExportUtilTest" time="0.0"/>
+  <testcase name="testExport_icsMixedCase" classname="ExportUtilTest" time="0.001"/>
+  <testcase name="testExport_ical" classname="ExportUtilTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

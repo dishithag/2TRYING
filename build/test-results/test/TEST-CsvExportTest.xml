@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="CsvExportTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2025-11-23T16:07:45" hostname="DISHITHAs-MacBook-Air.local" time="0.006">
+  <properties/>
+  <testcase name="testExportWithNullDescription" classname="CsvExportTest" time="0.001"/>
+  <testcase name="testExportWithEmptyDescription" classname="CsvExportTest" time="0.001"/>
+  <testcase name="testExportEscapeQuotes" classname="CsvExportTest" time="0.0"/>
+  <testcase name="testExportNoEscapingNeeded" classname="CsvExportTest" time="0.0"/>
+  <testcase name="testEscapeCsv_nullAndEmpty" classname="CsvExportTest" time="0.0"/>
+  <testcase name="testExportEscapeNewline" classname="CsvExportTest" time="0.001"/>
+  <testcase name="testExportWithHeader" classname="CsvExportTest" time="0.001"/>
+  <testcase name="writeRow_allDayEvent_blanksTimes_andMarksTrue" classname="CsvExportTest" time="0.0"/>
+  <testcase name="writeRow_privateEvent_lastColumnTrue" classname="CsvExportTest" time="0.0"/>
+  <testcase name="testExportToCurrentDirectory" classname="CsvExportTest" time="0.001"/>
+  <testcase name="testExportNotAllDayEvent" classname="CsvExportTest" time="0.001"/>
+  <testcase name="testExportCreatesFile" classname="CsvExportTest" time="0.0"/>
+  <testcase name="testExportEscapeComma" classname="CsvExportTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
