@@ -96,7 +96,9 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private void buildNorth() {
-    JPanel panel = new JPanel();
+    final JPanel panel = new JPanel();
+    panel.add(new JLabel("Calendar:"));
+    panel.add(calendarCombo);
     calendarCombo.addActionListener(e -> {
       if (features != null && calendarCombo.getSelectedItem() != null) {
         features.selectCalendar(calendarCombo.getSelectedItem().toString());
@@ -105,29 +107,26 @@ public class CalendarFrame extends JFrame implements GuiView {
 
     JButton newCalendar = new JButton("New Calendar");
     newCalendar.addActionListener(e -> promptCreateCalendar());
+    panel.add(newCalendar);
 
     JButton renameCalendar = new JButton("Rename");
     renameCalendar.addActionListener(e -> promptRenameCalendar());
+    panel.add(renameCalendar);
 
     JButton changeZone = new JButton("Change Timezone");
     changeZone.addActionListener(e -> promptChangeZone());
+    panel.add(changeZone);
 
     JButton export = new JButton("Export");
     export.addActionListener(e -> promptExport());
+    panel.add(export);
 
     JButton prev = new JButton("◀");
     prev.addActionListener(e -> navigateMonth(-1));
+    panel.add(prev);
 
     JButton next = new JButton("▶");
     next.addActionListener(e -> navigateMonth(1));
-
-    panel.add(new JLabel("Calendar:"));
-    panel.add(calendarCombo);
-    panel.add(newCalendar);
-    panel.add(renameCalendar);
-    panel.add(changeZone);
-    panel.add(export);
-    panel.add(prev);
     panel.add(monthLabel);
     panel.add(next);
     panel.add(zoneLabel);
@@ -146,22 +145,21 @@ public class CalendarFrame extends JFrame implements GuiView {
     wrapper.add(selectedDateLabel, BorderLayout.NORTH);
     wrapper.add(new JScrollPane(eventList), BorderLayout.CENTER);
 
-    JPanel buttons = new JPanel();
+    final JPanel buttons = new JPanel();
     JButton create = new JButton("Create Event");
     create.addActionListener(e -> promptCreateEvent());
+    buttons.add(create);
     JButton edit = new JButton("Edit");
     edit.addActionListener(e -> promptEditEvent());
+    buttons.add(edit);
     JButton copyEvent = new JButton("Copy Event");
     copyEvent.addActionListener(e -> promptCopyEvent());
+    buttons.add(copyEvent);
     JButton copyDay = new JButton("Copy Day");
     copyDay.addActionListener(e -> promptCopyDay());
+    buttons.add(copyDay);
     JButton copyRange = new JButton("Copy Range");
     copyRange.addActionListener(e -> promptCopyRange());
-
-    buttons.add(create);
-    buttons.add(edit);
-    buttons.add(copyEvent);
-    buttons.add(copyDay);
     buttons.add(copyRange);
     wrapper.add(buttons, BorderLayout.SOUTH);
     wrapper.setPreferredSize(new Dimension(420, 700));

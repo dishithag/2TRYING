@@ -90,14 +90,33 @@ public final class EventInput {
       this.untilDate = untilDate;
     }
 
+    /**
+     * Creates a non-recurring rule.
+     *
+     * @return rule representing no recurrence
+     */
     public static RecurrenceRule none() {
       return new RecurrenceRule(null, null, null);
     }
 
+    /**
+     * Creates a recurrence rule for a fixed number of occurrences.
+     *
+     * @param weekdays weekdays on which the event repeats
+     * @param occurrences number of occurrences
+     * @return recurrence rule
+     */
     public static RecurrenceRule forOccurrences(Set<DayOfWeek> weekdays, int occurrences) {
       return new RecurrenceRule(Objects.requireNonNull(weekdays, "weekdays"), occurrences, null);
     }
 
+    /**
+     * Creates a recurrence rule that repeats until a specific date.
+     *
+     * @param weekdays weekdays on which the event repeats
+     * @param untilDate inclusive end date for recurrence
+     * @return recurrence rule
+     */
     public static RecurrenceRule untilDate(Set<DayOfWeek> weekdays, LocalDate untilDate) {
       return new RecurrenceRule(Objects.requireNonNull(weekdays, "weekdays"), null,
           Objects.requireNonNull(untilDate, "untilDate"));

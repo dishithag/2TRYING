@@ -158,8 +158,8 @@ public class GuiController implements GuiFeatures {
     }
     switch (scope) {
       case EVENT:
-        cal.editEvent(reference.getSubject(), reference.getStart(), update.getProperty(),
-            update.getNewDateTime(), update.getNewValue());
+        cal.editEvent(reference.getSubject(), reference.getStart(),
+            update.getProperty(), update.getNewDateTime(), update.getNewValue());
         break;
       case EVENTS:
         cal.editEventsFromDate(reference.getSubject(), reference.getStart(),
@@ -176,7 +176,8 @@ public class GuiController implements GuiFeatures {
   }
 
   @Override
-  public void copyEvent(EventReference reference, String targetCalendar, LocalDateTime targetStart) {
+  public void copyEvent(EventReference reference, String targetCalendar,
+                        LocalDateTime targetStart) {
     calendarBook.copyEvent(activeCalendar, targetCalendar, reference.getStart(),
         reference.getSubject(), targetStart);
     refresh();

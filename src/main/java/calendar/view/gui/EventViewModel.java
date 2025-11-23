@@ -3,8 +3,8 @@ package calendar.view.gui;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * UI-friendly projection of an event.
