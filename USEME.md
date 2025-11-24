@@ -51,6 +51,9 @@ exit
   - Use **Copy Day** to copy all events on the selected date, or **Copy Range** to copy an interval; times are converted to the target calendar’s timezone.
 - **Error handling**: Dialogs explain missing fields, bad times, unsupported timezones, or conflicts. Stack traces are never shown.
 
+## Spec alignment notes
+- The GUI includes copy actions (event/day/range) even though the GUI-specific brief emphasizes creation and editing; copy support remains available to match the broader multi-calendar requirements and headless/interactive command set.
+
 ## Headless scripts
 - Scripts must contain one command per line and end with `exit`.
 - File extension determines export format automatically when using `export cal <filename>` (e.g., `.csv` or `.ical`).
