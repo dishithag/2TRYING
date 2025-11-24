@@ -524,16 +524,18 @@ public class CalendarFrame extends JFrame implements GuiView {
       JTextField weekdaysField, JLabel countLabel, JTextField countField, JLabel untilLabel,
       JComboBox<String> untilYear, JComboBox<String> untilMonth, JComboBox<String> untilDay) {
     boolean none = choice == null || "None".equals(choice);
-    boolean forCount = "Repeat for N times".equals(choice);
-    boolean until = "Repeat until date".equals(choice);
 
     weekdaysLabel.setVisible(!none);
     weekdaysField.setVisible(!none);
     weekdaysField.setEnabled(!none);
 
+    boolean forCount = "Repeat for N times".equals(choice);
+
     countLabel.setVisible(forCount);
     countField.setVisible(forCount);
     countField.setEnabled(forCount);
+
+    boolean until = "Repeat until date".equals(choice);
 
     untilLabel.setVisible(until);
     untilYear.setVisible(until);
