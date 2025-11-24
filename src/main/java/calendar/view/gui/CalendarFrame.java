@@ -475,8 +475,9 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private void updateRecurrenceVisibility(String choice, JLabel weekdaysLabel,
-      JTextField weekdaysField, JLabel countLabel, JTextField countField, JLabel untilLabel,
-      JComboBox<String> untilYear, JComboBox<String> untilMonth, JComboBox<String> untilDay) {
+      JTextField weekdaysField, JLabel countLabel, JTextField countField,
+      JLabel untilLabel, JComboBox<String> untilYear, JComboBox<String> untilMonth,
+      JComboBox<String> untilDay) {
     boolean none = choice == null || "None".equals(choice);
 
     weekdaysLabel.setVisible(!none);
