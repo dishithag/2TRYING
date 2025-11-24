@@ -4,15 +4,19 @@
 - From the project root (same folder as `gradlew`), run:
   - `./gradlew clean jar`
 - The assembled JAR is placed at `build/libs/calendar-1.0.jar`.
+- Double-clicking the JAR opens the GUI; terminal commands are listed below.
 
-## Run modes
+## Run modes (from project root)
 - **GUI (default / double-click)**
   - `java -jar build/libs/calendar-1.0.jar`
+  - Behavior: opens the Swing month view; if no calendars exist, a default calendar is created in your system timezone.
 - **Interactive text mode**
   - `java -jar build/libs/calendar-1.0.jar --mode interactive`
+  - Behavior: prompts for commands one per line until `exit`.
 - **Headless script mode**
   - `java -jar build/libs/calendar-1.0.jar --mode headless <path-to-script>`
   - Example: `java -jar build/libs/calendar-1.0.jar --mode headless res/commands.txt`
+  - Behavior: executes commands from the file in order; the last command must be `exit`.
 
 ## Quick start (interactive CLI example)
 ```
@@ -26,20 +30,26 @@ exit
 ```
 
 ## GUI usage guide
-- **Opening**: Run the JAR with no arguments. A default calendar in your system timezone is created automatically if none exist.
+- **Opening**: Run the JAR with no arguments. A default calendar in your system timezone is created automatically if none exist; the active calendar name and timezone appear in the header.
 - **Calendar controls** (top bar):
-  - *Create calendar*: choose a name and timezone (e.g., `America/New_York`).
-  - *Switch calendar*: use the dropdown; the active calendar name/timezone is shown in the header.
-  - *Rename* / *Change timezone*: apply to the active calendar.
-  - *Export*: choose a filename ending in `.csv` or `.ical` to export the active calendar.
+  - *Create calendar*: enter name and timezone (IANA format like `America/New_York`).
+  - *Switch calendar*: pick from the dropdown; the header updates to the active calendar.
+  - *Rename* / *Change timezone*: acts on the active calendar.
+  - *Export*: enter a filename ending in `.csv` or `.ical`; the absolute path is shown after export.
 - **Month view**:
-  - Use **Prev** / **Next** to navigate months.
-  - Click any day cell to select it; days with events are marked, and the selected day is highlighted.
-- **Event list and actions** (right panel for the selected day):
-  - *Create event*: enter subject, start/end times (defaults to the selected day), description/location/status, and recurrence (choose weekdays plus either occurrence count or until-date for series).
-  - *Edit event*: pick the event, choose property and scope (single event, this-and-forward, or entire series), and apply changes.
-  - *Copy*: copy a specific event, all events on the selected day, or a date range to another calendar and start date/time.
-- **Error handling**: Invalid inputs (missing fields, bad times, timezone errors, conflicts) show dialog messages describing what to fix; stack traces are not shown.
+  - Use **Prev** / **Next** to change months.
+  - Click any day cell to select it; days with events are marked with a dot and the selection is highlighted.
+  - The right panel updates with events for the selected day in the active calendar’s timezone.
+- **Create an event**:
+  - Click **Create Event**; subject is required. Start/end default to the selected day.
+  - Optional fields: description, location, status (public/private).
+  - Recurring events: choose weekdays plus either number of occurrences or an end date.
+- **Edit events**:
+  - Select an event in the list, click **Edit**, choose which property to change and the scope (single event, this-and-forward, or entire series), then apply.
+- **Copy events**:
+  - Click **Copy Event** to copy the selected event to another calendar/date/time.
+  - Use **Copy Day** to copy all events on the selected date, or **Copy Range** to copy an interval; times are converted to the target calendar’s timezone.
+- **Error handling**: Dialogs explain missing fields, bad times, unsupported timezones, or conflicts. Stack traces are never shown.
 
 ## Headless scripts
 - Scripts must contain one command per line and end with `exit`.
