@@ -105,10 +105,13 @@ public class CalendarFrameSelectDateTest {
     JPanel monthPanel = (JPanel) monthPanelField.get(frame);
 
     JButton target = null;
-    for (var component : monthPanel.getComponents()) {
-      if (component instanceof JButton button && "5".equals(button.getText())) {
-        target = button;
-        break;
+    for (java.awt.Component component : monthPanel.getComponents()) {
+      if (component instanceof JButton) {
+        JButton button = (JButton) component;
+        if ("5".equals(button.getText())) {
+          target = button;
+          break;
+        }
       }
     }
 
