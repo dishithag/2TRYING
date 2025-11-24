@@ -379,7 +379,10 @@ public class CalendarFrame extends JFrame implements GuiView {
         new String[] {"None", "Repeat for N times", "Repeat until date"});
     JTextField weekdaysField = new JTextField();
     JTextField countField = new JTextField();
-    JTextField untilField = new JTextField();
+    JComboBox<String> untilYear = buildYearCombo();
+    JComboBox<String> untilMonth = buildMonthCombo();
+    JComboBox<String> untilDay = buildDayCombo();
+    attachUntilListeners(untilYear, untilMonth, untilDay);
 
     JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
     panel.add(new JLabel("Fields marked * are required."));
@@ -401,40 +404,46 @@ public class CalendarFrame extends JFrame implements GuiView {
     panel.add(recurrenceChoice);
     panel.add(new JLabel("Occurrences (for N times)"));
     panel.add(countField);
-    panel.add(new JLabel("Until date (yyyy-MM-dd)"));
-    panel.add(untilField);
+    panel.add(new JLabel("Until date"));
+    panel.add(untilYear);
+    panel.add(untilMonth);
+    panel.add(untilDay);
 
-    int result = JOptionPane.showConfirmDialog(this, panel, "Create Event",
-        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-    if (result != JOptionPane.OK_OPTION) {
-      return null;
+    while (true) {
+      int result = JOptionPane.showConfirmDialog(this, panel, "Create Event",
+          JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+      if (result != JOptionPane.OK_OPTION) {
+        return null;
+      }
+
+      String subject = subjectField.getText().trim();
+      if (subject.isEmpty()) {
+        showError("Subject is required");
+        continue;
+      }
+
+      LocalTime startTime = parseComboTime(startCombo);
+      LocalTime endTime = parseComboTime(endCombo);
+
+      if (startTime == null && endTime != null) {
+        showError("Select a start time or leave both blank for all-day");
+        continue;
+      }
+
+      LocalDate untilDate = parseUntilDate(untilYear, untilMonth, untilDay);
+
+      EventInput.RecurrenceRule rule = parseRecurrence(
+          (String) recurrenceChoice.getSelectedItem(), weekdaysField.getText(),
+          countField.getText(), untilDate);
+      if (rule == null) {
+        continue;
+      }
+
+      boolean publicEvent = "Public".equals(visibility.getSelectedItem());
+      String desc = descriptionField.getText().isBlank() ? null : descriptionField.getText().trim();
+      String loc = locationField.getText().isBlank() ? null : locationField.getText().trim();
+      return new EventInput(subject, date, startTime, endTime, publicEvent, desc, loc, rule);
     }
-
-    String subject = subjectField.getText().trim();
-    if (subject.isEmpty()) {
-      showError("Subject is required");
-      return null;
-    }
-
-    LocalTime startTime = parseComboTime(startCombo);
-    LocalTime endTime = parseComboTime(endCombo);
-
-    if (startTime == null && endTime != null) {
-      showError("Select a start time or leave both blank for all-day");
-      return null;
-    }
-
-    EventInput.RecurrenceRule rule = parseRecurrence(
-        (String) recurrenceChoice.getSelectedItem(), weekdaysField.getText(),
-        countField.getText(), untilField.getText());
-    if (rule == null) {
-      return null;
-    }
-
-    boolean publicEvent = "Public".equals(visibility.getSelectedItem());
-    String desc = descriptionField.getText().isBlank() ? null : descriptionField.getText().trim();
-    String loc = locationField.getText().isBlank() ? null : locationField.getText().trim();
-    return new EventInput(subject, date, startTime, endTime, publicEvent, desc, loc, rule);
   }
 
   private LocalTime parseComboTime(JComboBox<String> combo) {
@@ -455,9 +464,9 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private EventInput.RecurrenceRule parseRecurrence(String choice, String weekdays,
-      String count, String until) {
+      String count, LocalDate until) {
     if (choice == null || "None".equals(choice)) {
-      if (!weekdays.trim().isEmpty() || !count.trim().isEmpty() || !until.trim().isEmpty()) {
+      if (!weekdays.trim().isEmpty() || !count.trim().isEmpty() || until != null) {
         showError("Leave recurrence fields blank or choose a recurrence option");
         return null;
       }
@@ -471,19 +480,21 @@ public class CalendarFrame extends JFrame implements GuiView {
     if ("Repeat for N times".equals(choice)) {
       try {
         int occurrences = Integer.parseInt(count.trim());
+        if (occurrences <= 0) {
+          showError("Occurrences must be positive");
+          return null;
+        }
         return EventInput.RecurrenceRule.forOccurrences(weekdaySet, occurrences);
       } catch (NumberFormatException e) {
         showError("Enter a valid occurrence count");
         return null;
       }
     }
-    try {
-      LocalDate untilDate = LocalDate.parse(until.trim());
-      return EventInput.RecurrenceRule.untilDate(weekdaySet, untilDate);
-    } catch (DateTimeParseException e) {
-      showError("Until date must be yyyy-MM-dd");
+    if (until == null) {
+      showError("Select an until date");
       return null;
     }
+    return EventInput.RecurrenceRule.untilDate(weekdaySet, until);
   }
 
   private JLabel requiredLabel(String text) {
@@ -501,6 +512,83 @@ public class CalendarFrame extends JFrame implements GuiView {
       times[i + 1] = String.format("%02d:%02d", hour, minute);
     }
     return times;
+  }
+
+  private JComboBox<String> buildYearCombo() {
+    JComboBox<String> combo = new JComboBox<>();
+    combo.addItem("");
+    int currentYear = LocalDate.now().getYear();
+    for (int year = currentYear - 1; year <= currentYear + 10; year++) {
+      combo.addItem(String.valueOf(year));
+    }
+    return combo;
+  }
+
+  private JComboBox<String> buildMonthCombo() {
+    JComboBox<String> combo = new JComboBox<>();
+    combo.addItem("");
+    for (int month = 1; month <= 12; month++) {
+      combo.addItem(String.format("%02d", month));
+    }
+    return combo;
+  }
+
+  private JComboBox<String> buildDayCombo() {
+    JComboBox<String> combo = new JComboBox<>();
+    combo.addItem("");
+    for (int day = 1; day <= 31; day++) {
+      combo.addItem(String.format("%02d", day));
+    }
+    return combo;
+  }
+
+  private void attachUntilListeners(JComboBox<String> year, JComboBox<String> month,
+      JComboBox<String> day) {
+    Runnable refreshDays = () -> updateUntilDays(year, month, day);
+    year.addActionListener(e -> refreshDays.run());
+    month.addActionListener(e -> refreshDays.run());
+  }
+
+  private void updateUntilDays(JComboBox<String> year, JComboBox<String> month,
+      JComboBox<String> day) {
+    String yearVal = (String) year.getSelectedItem();
+    String monthVal = (String) month.getSelectedItem();
+    if (yearVal == null || monthVal == null || yearVal.isBlank() || monthVal.isBlank()) {
+      return;
+    }
+    try {
+      int y = Integer.parseInt(yearVal);
+      int m = Integer.parseInt(monthVal);
+      int length = YearMonth.of(y, m).lengthOfMonth();
+      DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+      model.addElement("");
+      for (int d = 1; d <= length; d++) {
+        model.addElement(String.format("%02d", d));
+      }
+      String currentSelection = (String) day.getSelectedItem();
+      day.setModel(model);
+      day.setSelectedItem(currentSelection);
+    } catch (NumberFormatException e) {
+      showError("Invalid until date");
+    }
+  }
+
+  private LocalDate parseUntilDate(JComboBox<String> year, JComboBox<String> month,
+      JComboBox<String> day) {
+    String yearVal = (String) year.getSelectedItem();
+    String monthVal = (String) month.getSelectedItem();
+    String dayVal = (String) day.getSelectedItem();
+    if (yearVal == null || monthVal == null || dayVal == null
+        || yearVal.isBlank() || monthVal.isBlank() || dayVal.isBlank()) {
+      return null;
+    }
+    try {
+      return LocalDate.of(Integer.parseInt(yearVal), Integer.parseInt(monthVal),
+          Integer.parseInt(dayVal));
+    } catch (DateTimeParseException | NumberFormatException e) {
+      showError("Until date must be valid");
+      return null;
+    }
   }
 
   private void promptEditEvent() {
