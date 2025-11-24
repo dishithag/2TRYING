@@ -364,47 +364,133 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private EventInput gatherEventInput(LocalDate date) {
-    JTextField subject = new JTextField();
-    JTextField start = new JTextField();
-    JTextField end = new JTextField();
-    JTextField location = new JTextField();
-    JTextField description = new JTextField();
-    Object[] fields = {
-        "Subject", subject,
-        "Start time (HH:mm, blank for all-day)", start,
-        "End time (HH:mm, blank for all-day)", end,
-        "Location", location,
-        "Description", description
-    };
-    int result = JOptionPane.showConfirmDialog(this, fields, "Create Event",
-        JOptionPane.OK_CANCEL_OPTION);
+    JComboBox<String> startCombo = new JComboBox<>(timeOptions());
+    JComboBox<String> endCombo = new JComboBox<>(timeOptions());
+    JLabel subjectLabel = requiredLabel("Subject");
+    JTextField subjectField = new JTextField();
+    JLabel startLabel = requiredLabel("Start time");
+    JLabel endLabel = new JLabel("End time");
+    JTextField locationField = new JTextField();
+    JTextField descriptionField = new JTextField();
+    JComboBox<String> visibility = new JComboBox<>(new String[] {"Public", "Private"});
+    JComboBox<String> recurrenceChoice = new JComboBox<>(
+        new String[] {"None", "Repeat for N times", "Repeat until date"});
+    JTextField weekdaysField = new JTextField();
+    JTextField countField = new JTextField();
+    JTextField untilField = new JTextField();
+
+    JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
+    panel.add(new JLabel("Fields marked * are required."));
+    panel.add(subjectLabel);
+    panel.add(subjectField);
+    panel.add(startLabel);
+    panel.add(startCombo);
+    panel.add(endLabel);
+    panel.add(endCombo);
+    panel.add(new JLabel("Location"));
+    panel.add(locationField);
+    panel.add(new JLabel("Description"));
+    panel.add(descriptionField);
+    panel.add(new JLabel("Visibility"));
+    panel.add(visibility);
+    panel.add(new JLabel("Recurrence weekdays (e.g., MTWRFSU)"));
+    panel.add(weekdaysField);
+    panel.add(new JLabel("Recurrence"));
+    panel.add(recurrenceChoice);
+    panel.add(new JLabel("Occurrences (for N times)"));
+    panel.add(countField);
+    panel.add(new JLabel("Until date (yyyy-MM-dd)"));
+    panel.add(untilField);
+
+    int result = JOptionPane.showConfirmDialog(this, panel, "Create Event",
+        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
     if (result != JOptionPane.OK_OPTION) {
       return null;
     }
-    boolean publicEvent = JOptionPane.showConfirmDialog(this, "Is this event public?",
-        "Visibility", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
 
-    LocalTime startTime = parseTime(start.getText());
-    LocalTime endTime = parseTime(end.getText());
+    String subject = subjectField.getText().trim();
+    if (subject.isEmpty()) {
+      showError("Subject is required");
+      return null;
+    }
 
-    RecurrenceDialog recurrenceDialog = new RecurrenceDialog(this);
-    EventInput.RecurrenceRule rule = recurrenceDialog.promptRecurrence();
+    LocalTime startTime = parseComboTime(startCombo);
+    LocalTime endTime = parseComboTime(endCombo);
 
-    return new EventInput(subject.getText().trim(), date, startTime, endTime,
-        publicEvent, description.getText().isBlank() ? null : description.getText().trim(),
-        location.getText().isBlank() ? null : location.getText().trim(), rule);
+    if (startTime == null && endTime != null) {
+      showError("Select a start time or leave both blank for all-day");
+      return null;
+    }
+
+    EventInput.RecurrenceRule rule = parseRecurrence(
+        (String) recurrenceChoice.getSelectedItem(), weekdaysField.getText(),
+        countField.getText(), untilField.getText());
+    if (rule == null) {
+      return null;
+    }
+
+    boolean publicEvent = "Public".equals(visibility.getSelectedItem());
+    String desc = descriptionField.getText().isBlank() ? null : descriptionField.getText().trim();
+    String loc = locationField.getText().isBlank() ? null : locationField.getText().trim();
+    return new EventInput(subject, date, startTime, endTime, publicEvent, desc, loc, rule);
   }
 
-  private LocalTime parseTime(String text) {
-    if (text == null || text.isBlank()) {
+  private LocalTime parseComboTime(JComboBox<String> combo) {
+    String value = (String) combo.getSelectedItem();
+    if (value == null || value.isBlank()) {
       return null;
     }
     try {
-      return LocalTime.parse(text.trim());
+      return LocalTime.parse(value);
     } catch (DateTimeParseException e) {
       showError("Time must be HH:mm");
       return null;
     }
+  }
+
+  private EventInput.RecurrenceRule parseRecurrence(String choice, String weekdays,
+      String count, String until) {
+    if (choice == null || "None".equals(choice)) {
+      return EventInput.RecurrenceRule.none();
+    }
+    Set<DayOfWeek> weekdaySet = parseWeekdays(weekdays);
+    if (weekdaySet.isEmpty()) {
+      showError("Specify weekdays for recurrence");
+      return null;
+    }
+    if ("Repeat for N times".equals(choice)) {
+      try {
+        int occurrences = Integer.parseInt(count.trim());
+        return EventInput.RecurrenceRule.forOccurrences(weekdaySet, occurrences);
+      } catch (NumberFormatException e) {
+        showError("Enter a valid occurrence count");
+        return null;
+      }
+    }
+    try {
+      LocalDate untilDate = LocalDate.parse(until.trim());
+      return EventInput.RecurrenceRule.untilDate(weekdaySet, untilDate);
+    } catch (DateTimeParseException e) {
+      showError("Until date must be yyyy-MM-dd");
+      return null;
+    }
+  }
+
+  private JLabel requiredLabel(String text) {
+    String labelText = "<html><span style='color:red'>*</span> " + text + "</html>";
+    return new JLabel(labelText);
+  }
+
+  private String[] timeOptions() {
+    String[] times = new String[49];
+    times[0] = "";
+    for (int i = 0; i < 48; i++) {
+      int minutes = i * 30;
+      int hour = minutes / 60;
+      int minute = minutes % 60;
+      times[i + 1] = String.format("%02d:%02d", hour, minute);
+    }
+    return times;
   }
 
   private void promptEditEvent() {
@@ -426,60 +512,31 @@ public class CalendarFrame extends JFrame implements GuiView {
     }
   }
 
-  private static final class RecurrenceDialog {
-    private final JFrame owner;
-
-    private RecurrenceDialog(JFrame owner) {
-      this.owner = owner;
-    }
-
-    private EventInput.RecurrenceRule promptRecurrence() {
-      String[] options = {"None", "Repeat for N times", "Repeat until date"};
-      int choice = JOptionPane.showOptionDialog(owner, "Recurrence", "Recurrence",
-          JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-      if (choice <= 0) {
-        return EventInput.RecurrenceRule.none();
-      }
-      Set<DayOfWeek> weekdays = parseWeekdays(
-          JOptionPane.showInputDialog(owner, "Weekdays (e.g., MTWRFSU):"));
-      if (weekdays.isEmpty()) {
-        return EventInput.RecurrenceRule.none();
-      }
-      if (choice == 1) {
-        String count = JOptionPane.showInputDialog(owner, "Occurrences:");
-        int occurrences = Integer.parseInt(count.trim());
-        return EventInput.RecurrenceRule.forOccurrences(weekdays, occurrences);
-      }
-      String until = JOptionPane.showInputDialog(owner, "Until date (yyyy-MM-dd):");
-      return EventInput.RecurrenceRule.untilDate(weekdays, LocalDate.parse(until.trim()));
-    }
-
-    private Set<DayOfWeek> parseWeekdays(String token) {
-      Set<DayOfWeek> result = new HashSet<>();
-      if (token == null) {
-        return result;
-      }
-      String trimmed = token.trim().toUpperCase();
-      Map<Character, DayOfWeek> map = weekdayMap();
-      for (char c : trimmed.toCharArray()) {
-        if (map.containsKey(c)) {
-          result.add(map.get(c));
-        }
-      }
+  private Set<DayOfWeek> parseWeekdays(String token) {
+    Set<DayOfWeek> result = new HashSet<>();
+    if (token == null) {
       return result;
     }
-
-    private Map<Character, DayOfWeek> weekdayMap() {
-      Map<Character, DayOfWeek> map = new HashMap<>();
-      map.put('M', DayOfWeek.MONDAY);
-      map.put('T', DayOfWeek.TUESDAY);
-      map.put('W', DayOfWeek.WEDNESDAY);
-      map.put('R', DayOfWeek.THURSDAY);
-      map.put('F', DayOfWeek.FRIDAY);
-      map.put('S', DayOfWeek.SATURDAY);
-      map.put('U', DayOfWeek.SUNDAY);
-      return map;
+    String trimmed = token.trim().toUpperCase();
+    Map<Character, DayOfWeek> map = weekdayMap();
+    for (char c : trimmed.toCharArray()) {
+      if (map.containsKey(c)) {
+        result.add(map.get(c));
+      }
     }
+    return result;
+  }
+
+  private Map<Character, DayOfWeek> weekdayMap() {
+    Map<Character, DayOfWeek> map = new HashMap<>();
+    map.put('M', DayOfWeek.MONDAY);
+    map.put('T', DayOfWeek.TUESDAY);
+    map.put('W', DayOfWeek.WEDNESDAY);
+    map.put('R', DayOfWeek.THURSDAY);
+    map.put('F', DayOfWeek.FRIDAY);
+    map.put('S', DayOfWeek.SATURDAY);
+    map.put('U', DayOfWeek.SUNDAY);
+    return map;
   }
 
   private static final class EditDialog {
