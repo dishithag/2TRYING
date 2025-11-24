@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -295,6 +296,20 @@ public class CalendarImpl implements Calendar {
       return;
     }
 
+    if (prop == EventProperty.END) {
+      LocalDateTime templ = LocalDateTime.parse(newValue);
+      LocalTime targetTime = templ.toLocalTime();
+      for (Event e : seriesToEdit) {
+        LocalDateTime adjustedEnd = e.getStartDateTime().toLocalDate().atTime(targetTime);
+        Event modified = EventBuilder.from(e)
+            .endDateTime(adjustedEnd)
+            .build();
+        enforceNoDuplicateOnReplace(e, modified);
+        replaceEvent(e, modified);
+      }
+      return;
+    }
+
     for (Event e : seriesToEdit) {
       Event modified = applyProperty(e, prop, newValue);
       enforceNoDuplicateOnReplace(e, modified);
@@ -362,6 +377,20 @@ public class CalendarImpl implements Calendar {
         Event updated = EventBuilder.from(e)
             .startDateTime(newStart)
             .endDateTime(newEnd)
+            .build();
+        enforceNoDuplicateOnReplace(e, updated);
+        replaceEvent(e, updated);
+      }
+      return;
+    }
+
+    if (prop == EventProperty.END) {
+      LocalDateTime templ = LocalDateTime.parse(newValue);
+      LocalTime targetTime = templ.toLocalTime();
+      for (Event e : getEventsBySeriesId(seriesId)) {
+        LocalDateTime adjustedEnd = e.getStartDateTime().toLocalDate().atTime(targetTime);
+        Event updated = EventBuilder.from(e)
+            .endDateTime(adjustedEnd)
             .build();
         enforceNoDuplicateOnReplace(e, updated);
         replaceEvent(e, updated);

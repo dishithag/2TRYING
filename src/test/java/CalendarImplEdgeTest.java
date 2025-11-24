@@ -684,6 +684,25 @@ public class CalendarImplEdgeTest {
     assertFalse(events.get(0).getEndDateTime().equals(events.get(1).getEndDateTime()));
   }
 
+  @Test
+  public void testEditEventsFromDate_endAnchorsToEachOccurrenceDate() {
+    CalendarImpl cal = new CalendarImpl();
+    LocalDateTime start = LocalDateTime.of(2025, 11, 19, 1, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 11, 19, 2, 0);
+    cal.createEventSeries("Series", start, end,
+        EnumSet.of(DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY), 2);
+
+    cal.editEventsFromDate("Series",
+        LocalDateTime.of(2025, 11, 19, 1, 0),
+        EventProperty.END,
+        LocalDateTime.of(2025, 11, 19, 3, 0), null);
+
+    List<Event> events = cal.getAllEvents();
+    assertEquals(2, events.size());
+    assertEquals(LocalDateTime.of(2025, 11, 19, 3, 0), events.get(0).getEndDateTime());
+    assertEquals(LocalDateTime.of(2025, 11, 21, 3, 0), events.get(1).getEndDateTime());
+  }
+
   /**
    * Test that rebuildSeriesIndex is actually called when setZoneId changes zone.
    * Kills mutation on line 81 (removed call to rebuildSeriesIndex).
