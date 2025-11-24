@@ -118,9 +118,9 @@ public class GuiController implements GuiFeatures {
   @Override
   public void goToMonth(YearMonth month) {
     this.visibleMonth = Objects.requireNonNull(month, "month");
-    if (selectedDate == null || !YearMonth.from(selectedDate).equals(month)) {
-      selectedDate = month.atDay(1);
-    }
+    int day = selectedDate == null ? 1
+        : Math.min(selectedDate.getDayOfMonth(), month.lengthOfMonth());
+    selectedDate = month.atDay(day);
     refresh();
   }
 

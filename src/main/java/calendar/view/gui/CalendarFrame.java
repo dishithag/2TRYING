@@ -196,6 +196,10 @@ public class CalendarFrame extends JFrame implements GuiView {
     for (int day = 1; day <= length; day++) {
       LocalDate date = state.getVisibleMonth().atDay(day);
       JButton button = new JButton(String.valueOf(day));
+      button.setEnabled(true);
+      button.setFocusable(false);
+      button.setOpaque(true);
+      button.setContentAreaFilled(true);
       if (date.equals(state.getSelectedDate())) {
         button.setBackground(new Color(200, 230, 255));
       }
