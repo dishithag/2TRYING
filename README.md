@@ -1,165 +1,114 @@
-# 1 Introduction
+# Overview
 
-In this assignment, we will extend the functionality of the calendar 
-application with additional features. Hopefully your current design
-of the calendar application is flexible and scalable in a way that will
-allow you to incorporate the additional requirements with minimal changes to the existing implementation.
+In this iteration of this project, you will build a view
+for the calendar application, featuring a graphical user interface.
+This will allow a user to interactively create,edit, and view events in
+a digital calendar. The result of this iteration will be a calendar that
+a user can interact with in a text-based interface, a GUI, as well as use scripting in headless mode.
 
-# 2 Support multiple calendars
+# 1 Graphical View
 
-The previous iteration of the calendar application allowed users
-to create, modify, and query events for a single calendar. You must now extend the capability of your application to support multiple calendars. 
+## 1.1 General Constraints
 
-The application should support the ability to create and maintain several calendars, each with its own set of events and a unique name. The calendar name will be used to identify the calendar. It should be possible to edit the name of a calendar. Two calendars cannot have the same name.
+1. You must use the Java Swing library to build the user interface of this application. To this end, you can use the examples discussed in the view module and any class in the official Java Swing library. You are not allowed to use any component or class that is not part of the JDK. 
 
-# 3 Support Timezones
+2. The GUI should, at a minimum, support a *month view* of a calendar. A month view shows all the days of the current month. A user can navigate to another month in the future or in the past. You are free to add more views (e.g., weekly view, days view, etc.).
 
-Currently the times specified for events are assumed to be in reference to a default timezone (presumably EST). You must now support the ability to manage different timezones. 
+3. The GUI must expose features listed and described in the next section.
 
-Specifically, each calendar is associated with a specific timezone. All events in that calendar are assumed to be in its timezone (and thus, timezone does not have to be specified when dealing with events). However it should be possible to change the timezone of a calendar.
+4. The GUI should have support for multiple calendars in any timezone chosen by the user.
+
+5. You are expected to handle invalid user input via the GUI gracefully. Graceful error handling means that you must detect the cause of the error and inform the user with a useful message that does not leak implementation details but lets the user know how to fix the error.
+
+6. The layout of the UI should be reasonable. Things should be in proper proportion, and laid out in a reasonable manner. **Buttons/text fields/labels that are oversized, or haphazardly arranged, even if functional, will result in a point deduction.**
+
+7. Each user interaction or user input must be reasonably user-friendly  (e.g. making the user type something when a less error-prone method is  possible is not good UI design). We do not expect snazzy, sophisticated  user-friendly programs. Our standard is: can a user unfamiliar with your code and technical documentation operate the program correctly **without reading your code and technical documentation?**
+
+8. Keep in mind that this is a graphical user interface for your program.  It is not a graphical way to use the same interaction as the text mode. The expectations of the user, and what the user is expected to enter, are not the same as when specifying script commands!
+
+## 1.2 Expected Feature Set
+
+The following features must be usable via your graphical user interface.
+
+1. A user should be able to create a new calendar for a particular timezone.
+
+2. A user should be able to select a calendar and create, edit, view events for the selected calendar.
+
+3. A user should know which calendar they are on when interacting with the GUI. The way you distinguish a calendar is upto you. One example would be to color code the different calendars.
+
+4. A user should not be forced to create a new calendar. Instead, the GUI should allow a user to work with a default calendar in the user's current timezone based on their system setting.
+
+5. A user should be able to select a specific day of a month and view all events scheduled on that day in the calendar's timezone.
+
+6. A user should be able to create a new event on a selected day of a month. The event can be a single or recurring event. For recurring events, a user should be able to specify the weekdays on which the event will repeat and the frequency in terms of number of occurrences or until an end date.
+
+7. A user should be able to select a specific day of a month and edit events.
+
+The user should be able to identify a single event and edit it. The user should also be able to identify multiple events with the same name, possibly from a user-specific point in time, and edit them together.
 
 
-# 4 Copy events
+## 1.3 Design Considerations
 
-Several users suggested that given the application can support multiple calendars, they should be able to copy events to another timeline, even across calendars. For example, the order of lecture topics in CS 5010 stay the same from one semester to another, so these events could simply be copied *en-masse* to a time line that starts with a specified date (for the next semester). For example, *copy all events for lecture topics from September 5 2024 to December 18 2024 (Fall 2024 semester) to a place in the calendar that starts at January 8 2025 (start of the Spring 2025 semester)*.
+Carefully design the interaction between a view and a controller,
+and formalize the interactions with view and controller interfaces.
+You may design a single controller that manages the program in
+interactive, headless and GUI modes. Different controllers for different views are also possible if the views are very different from each other.
+However, be mindful of the MVC principles and separation between  the model, view and controller. When designing, always ask: "can I change one part with no/minimal changes to the others?"
 
-Based on this need you must add support to copy a single or recurring event  from a specified (source) calendar to a specified (starting) date and time in a specified (target) calendar. You must also support copy all events within a specified interval to a specified (starting) date and time. In both cases, the source and target calendars may or may not be the same.
+## 1.4 Testing
 
-Copying an event to a target calendar must be considered a new event in the target calendar, and therefore conflicts must be managed consistent with the above.
+Think carefully about which parts of the program require testing. For example, you are not expected to test whether a particular button click produces the desired result. In that sense, testing the actual GUI is optional. However, you should test whether the controller does what it is supposed to in reaction to this happening.
 
-# 5 Support for exporting in iCal format
+# 2 Program Execution
 
-The application should also be able to export the calendar to a iCal file (in addition to CSV). The expected format of the iCal file must conform
-to the file format specs listed [here](https://support.google.com/calendar/answer/37118?hl=en&co=GENIE.Platform%3DDesktop&oco=1#zippy=%2Ccreate-or-edit-an-icalendar-file).
+## 2.1 Creating a JAR File
 
-You can verify the correctness of the iCal file by uploading it to Google Calendar. If the upload is successful, you should be able to see the events in Google calendar.
-
-When exporting the calendar the program should automatically detect the export format by detecting the extension of the filename. For example:
-
-`export cal fileName.csv` should save in CSV format
-`export cal fileName.ical` should save in iCal format
-
-In both cases the absolute path of the exported file must be printed so a user knows where to find this file.
-
-# 6 Support for additional commands
-
-The following commands must be supported in the text-based
-interface:
-
-`create calendar --name <calName> --timezone area/location`
-
-This command will create a new calendar with a unique name 
-and timezone as specified by the user. The expected timezone
-format is the [IANA Time Zone Database format](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). In this format the timezone is specified as "area/location". Few examples include "America/New_York", "Europe/Paris", "Asia/Kolkata", "Australia/Sydney", "Africa/Cairo", etc. The command is invalid if the user provides a non-unique calendar name or an unsupported timezone. 
-
-`edit calendar --name <name-of-calendar> --property <property-name> <new-property-value>`
-
-This command is used to change/modify an existing property (`name` or `timezone`) of the 
-calendar. The command is invalid if the property being changed is absent
-or the value is invalid in the context of the property.
-
-`use calendar --name <name-of-calendar>`
-
-A user can create/edit/print/export events in the context of a
-calendar. They can use this command to set the calendar context.
-Note this means that the commands in the previous iteration only
-make sense when a calendar is in use (i.e. some calendar must be in use for them to work). Otherwise, they are invalid.
-
-`copy event <eventName> on <dateStringTtimeString> --target <calendarName> to <dateStringTtimeString>`
-
-The command is used to copy a specific event with the given name and
-start date/time from the current calendar to the target calendar to start at the specified date/time. The "to" date/time is assumed to be specified in the timezone of the target calendar. 
-
-`copy events on <dateString> --target <calendarName> to <dateString>  `
-
-This command has the same behavior as the `copy event` above, except it 
-copies all events scheduled on that day. The times physically remain the same, except they are converted to the timezone of the target calendar (e.g. an event that starts at 2pm in the source calendar which is in EST would start at 11am in the destination calendar which is in PST).
-
-`copy events between <dateString> and <dateString> --target <calendarName> to <dateString>  `
-
-The command has the same behavior as the other copy commands, except it copies all events scheduled in the specified date interval (i.e. overlaps with the specified interval). The date string in the target calendar corresponds to the start of the interval. The endpoint dates of the interval are inclusive.
-
-In both the `copy events` commands, if an event series partly overlaps with the specified range, only those events in the series that overlap with the specified range should be copied, and their status as part of a series should be retained in the destination calendar.
-
-# 7 Miscellaneous Requirements and Recommendations
-
-## 7.1 Design Considerations
-
-As you add these features, pay attention to your design. 
-
-   * What changes in your existing design do you make, and why?
-
-   * What is the best way to incorporate new features into an existing application? Do you support all features, or do you release incremental versions with different features (e.g. Starter Edition, Pro Edition, etc.)?
-
-   * As you make changes, are you still adhering to the MVC architecture? Are you putting each class and operation where it belongs?
-
-   * Have your design enhancements gone beyond the specific operations to be implemented? How easy would it be to add similar extensions in the future?
-
-   * Whatever design choices you make, what are its advantages and limitations?
- 
-While you are allowed to change your design, you should be able to justify it. The bigger the change, the better we expect your justification to be. Please document and justify each change in a README file (maintain this file as you complete this assignment, rather than summarize after you are done and risk missing something). 
-
-## 7.2 Testing
-
-You are expected to test each part of the program that you have written. Accordingly, you are expected to test your model, controller and if applicable, your view. Use of mocks to test the controller is highly recommended, but not required. 
-
-You are not allowed to use external tools (i.e. classes not within the JDK), with the exception of the JUnit testing framework.
-
-## 7.3 Prepare JAR
-
-A user should be able to run your application using a JAR file. To create a JAR file run the command `./gradlew jar`. This will create a JAR file in the build/libs directory. You can run the jar using the command `java -jar build/libs/JARNAME.jar`. You can provide arguments after the jar file path.
+A user should be able to run your application using a JAR file. To create a JAR file run the command ./gradlew jar. This will create a JAR file in the build/libs directory. You can run the jar using the command java -jar build/libs/JARNAME.jar. You can provide arguments after the jar file path.
 
 You should assume that the user will run your program from this project's root. You must ensure that file paths that your program relies on are platform independent.
 
-# 8 What to Submit
+## 2.2 Command-line arguments
 
-This is a group assignment. The submission should be made to the group repo created on Pawtograder for this assignment. 
+Your program (from IntelliJ or the JAR file) should accept command-line inputs. Three command-line inputs are valid:
 
-You must submit the following to be considered for grading:
+* `java -jar JARNAME.jar --mode headless path-of-script-file`: when invoked in this manner the program should open the script file, execute it and then exit. Invalid commands should be handled gracefully with appropriate error messages. This is how the program worked in the previous iteration.
 
-- A directory called **res/** with the following:
-  - A screenshot of the Google Calendar with your events
-  - A txt file, **commands.txt**, with the list of valid commands.
-  - A txt file, **invalid.txt** with a list of commands where at least one command is invalid.
-  - A class diagram representing the structure of the application's design. The class diagram should show names of classes and interfaces, signature of methods and relationships (inheritance and composition). Do not show field names they may clutter the diagram. We expect these to be not hand-scribbled, you stand to lose points for submitting a picture of a hand-drawn diagram.
-- A **USEME.md file** with instructions to run the JAR file with arguments. Make sure to provide example commands. 
+* `java -jar JARNAME.jar --mode interactive`: when invoked in this manner the program should open in an interactive text mode, allowing the user to type the script and execute it one line at a time. This is how the program worked in the previous iteration.
+
+* `java -jar JARNAME.jar`: when invoked in this manner the program should open the graphical user interface. This is what will happen if you simply double-click on the jar file.
+
+Any other command-line arguments are invalid: in these cases the program should display an error message suitably and quit.
+
+# 3 What to submit
+
+- Submit a res/ folder with the following:
+  - A screenshot showing your GUI. 
+  - A `Misc.md` file with the following information:
+    - `A list of changes to the design of your program, along with a brief justification of each. **Describing changes only in paragraph form will result in a point deduction.**
+    - Which features work and which do not. 
+    - Anything else you need us to know when we grade.
+  - A txt file, commands.txt, with the list of valid commands.
+  - A txt file, invalid.txt with a list of commands where at least one command is invalid.
+- A USEME.md file that contains:
+  - Instructions to run your program in different modes using examples.
+  - a bullet-point list of how to use your GUI to use each operation supported by your program. Screenshots would be helpful, but not necessary.
 - The main method must be in the class 'src/main/java/CalendarRunner.java'.
-- Complete the anonymous [peer evaluation survey](https://forms.gle/V12tTqsjmPdZ5xv69). You do not need to take this survey if you are working alone.
-	
-# Grading standards
- 
-For this assignment, you will be graded on 
+- Complete the [anonymous peer evaluation survey](https://forms.gle/11qoosf7ukmVFWuT9). You do not need to take the survey if you are working alone.
 
-- completeness of your submission, including all the expected examples
+# Grading Criteria
 
-- adherence to an MVC design
+1. The completeness, layout, and behavior of your GUI.
 
-- the design of your interface(s), in terms of clarity, flexibility, and how plausibly it will support needed functionality;
+2. Whether your design aligns with MVC and SOLID principles.
 
-- the appropriateness of your representation choices for the data, and the adequacy of any documented class invariants (please comment on why you chose the representation you did in the code);
+3. Whether you have addressed issues in the previous version.
 
--  the forward thinking in your design, in terms of its flexibility, use of abstraction, etc.
+4. Well-structured and clean code with relevant documentation.
 
--  the correctness and style of your implementation, and
+5. Avoid code smells wherever relevant.
 
--  the comprehensiveness and correctness of your test coverage.
+6. Completeness and correctness of your tests as evidenced by running them and coverage metrics for the controller and model.
 
-**Make sure there are no binary files in your `src` folder! Pawtograder only expects text files (source code) in this folder, so binary files will result in a rejection of your submission. Remember that most image formats are binary.**
+7. Proper access modifiers.
 
-# Grading standards
- 
-For this assignment, you will be graded on 
-
-- completeness of your submission, including all the expected examples
-
-- adherence to an MVC design
-
-- the design of your interface(s), in terms of clarity, flexibility, and how plausibly it will support needed functionality;
-
-- the appropriateness of your representation choices for the data, and the adequacy of any documented class invariants (please comment on why you chose the representation you did in the code);
-
--  the forward thinking in your design, in terms of its flexibility, use of abstraction, etc.
-
--  the correctness and style of your implementation, and
-
--  the comprehensiveness and correctness of your test coverage.
+8. Expected formatting style.
