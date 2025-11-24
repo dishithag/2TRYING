@@ -795,7 +795,7 @@ public class CalendarFrame extends JFrame implements GuiView {
       }
     }
 
-    private static final class EditResult {
+    private final class EditResult {
       private final List<EventUpdate> updates;
       private final EditScope scope;
 
