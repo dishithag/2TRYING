@@ -16,6 +16,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -632,15 +634,18 @@ public class CalendarFrame extends JFrame implements GuiView {
       return;
     }
     EventReference ref = new EventReference(selected.getSubject(), selected.getStart());
-    EditDialog dialog = new EditDialog(this);
+    EditDialog dialog = new EditDialog(this, selected);
     EditDialog.EditResult result = dialog.prompt();
     if (result == null) {
       return;
     }
-    try {
-      features.editEvent(ref, result.update, result.scope);
-    } catch (Exception ex) {
-      showError(ex.getMessage());
+    for (EventUpdate update : result.updates) {
+      try {
+        features.editEvent(ref, update, result.scope);
+      } catch (Exception ex) {
+        showError(ex.getMessage());
+        return;
+      }
     }
   }
 
@@ -671,46 +676,131 @@ public class CalendarFrame extends JFrame implements GuiView {
     return map;
   }
 
-  private static final class EditDialog {
+  private final class EditDialog {
     private final JFrame owner;
+    private final EventViewModel selected;
 
-    private EditDialog(JFrame owner) {
+    private EditDialog(JFrame owner, EventViewModel selected) {
       this.owner = owner;
+      this.selected = selected;
     }
 
     private EditResult prompt() {
-      String[] properties = {"subject", "start", "end", "description", "location", "status"};
-      String property = (String) JOptionPane.showInputDialog(owner, "Property to edit:",
-          "Edit Property", JOptionPane.PLAIN_MESSAGE, null, properties, properties[0]);
-      if (property == null) {
-        return null;
-      }
-      String value = JOptionPane.showInputDialog(owner, "New value:");
-      if (value == null) {
-        return null;
-      }
+      JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
+      panel.add(new JLabel("Select properties to edit and supply new values."));
+
+      JCheckBox subjectBox = new JCheckBox("Subject", true);
+      JTextField subjectField = new JTextField(selected.getSubject());
+      panel.add(subjectBox);
+      panel.add(subjectField);
+
+      JCheckBox startBox = new JCheckBox("Start", false);
+      JTextField startField = new JTextField(selected.getStart().toString());
+      panel.add(startBox);
+      panel.add(startField);
+
+      JCheckBox endBox = new JCheckBox("End", false);
+      JTextField endField = new JTextField(selected.getEnd().toString());
+      panel.add(endBox);
+      panel.add(endField);
+
+      JCheckBox descriptionBox = new JCheckBox("Description", false);
+      JTextField descriptionField = new JTextField(selected.getDescription().orElse(""));
+      panel.add(descriptionBox);
+      panel.add(descriptionField);
+
+      JCheckBox locationBox = new JCheckBox("Location", false);
+      JTextField locationField = new JTextField(selected.getLocation().orElse(""));
+      panel.add(locationBox);
+      panel.add(locationField);
+
+      JCheckBox visibility = new JCheckBox("Visibility", false);
+      JComboBox<String> visibilityBox = new JComboBox<>(new String[] {"Public", "Private"});
+      visibilityBox.setSelectedItem(selected.isPublicEvent() ? "Public" : "Private");
+      panel.add(visibility);
+      panel.add(visibilityBox);
+
       String[] scopes = {"event", "events", "series"};
-      String scope = (String) JOptionPane.showInputDialog(owner, "Scope:",
-          "Scope", JOptionPane.PLAIN_MESSAGE, null, scopes, scopes[0]);
-      if (scope == null) {
+      JComboBox<String> scopeBox = new JComboBox<>(scopes);
+      panel.add(new JLabel("Scope"));
+      panel.add(scopeBox);
+
+      while (true) {
+        int choice = JOptionPane.showConfirmDialog(owner, panel, "Edit Event",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (choice != JOptionPane.OK_OPTION) {
+          return null;
+        }
+        List<EventUpdate> updates = new ArrayList<>();
+        if (subjectBox.isSelected()) {
+          String subject = subjectField.getText().trim();
+          if (subject.isEmpty()) {
+            showError("Subject cannot be empty");
+            continue;
+          }
+          updates.add(new EventUpdate(EventProperty.SUBJECT, null, subject));
+        }
+        if (startBox.isSelected()) {
+          LocalDateTime start = parseEditDateTime(startField.getText());
+          if (start == null) {
+            continue;
+          }
+          updates.add(new EventUpdate(EventProperty.START, start, null));
+        }
+        if (endBox.isSelected()) {
+          LocalDateTime end = parseEditDateTime(endField.getText());
+          if (end == null) {
+            continue;
+          }
+          updates.add(new EventUpdate(EventProperty.END, end, null));
+        }
+        if (descriptionBox.isSelected()) {
+          updates.add(new EventUpdate(EventProperty.DESCRIPTION, null,
+              descriptionField.getText().trim()));
+        }
+        if (locationBox.isSelected()) {
+          updates.add(new EventUpdate(EventProperty.LOCATION, null,
+              locationField.getText().trim()));
+        }
+        if (visibility.isSelected()) {
+          String vis = (String) visibilityBox.getSelectedItem();
+          updates.add(new EventUpdate(EventProperty.STATUS, null,
+              "Public".equals(vis) ? "public" : "private"));
+        }
+        if (updates.isEmpty()) {
+          showError("Select at least one property to edit");
+          continue;
+        }
+        EditScope scope = EditScope.fromToken((String) scopeBox.getSelectedItem());
+        return new EditResult(updates, scope);
+      }
+    }
+
+    private LocalDateTime parseEditDateTime(String text) {
+      String value = text == null ? "" : text.trim();
+      if (value.isEmpty()) {
+        showError("Enter a date-time in yyyy-MM-dd'T'HH:mm");
         return null;
       }
-      EventUpdate update;
-      if ("start".equalsIgnoreCase(property) || "end".equalsIgnoreCase(property)) {
-        update = new EventUpdate(EventProperty.valueOf(property.toUpperCase()),
-            LocalDateTime.parse(value.trim()), null);
-      } else {
-        update = new EventUpdate(EventProperty.valueOf(property.toUpperCase()), null, value.trim());
+      try {
+        return LocalDateTime.parse(value);
+      } catch (Exception e) {
+        try {
+          DateTimeFormatter alt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+          return LocalDateTime.parse(value, alt);
+        } catch (Exception ex) {
+          showError("Date-time must be yyyy-MM-dd'T'HH:mm or yyyy-MM-dd HH:mm");
+          return null;
+        }
       }
-      return new EditResult(update, EditScope.fromToken(scope));
     }
 
     private static final class EditResult {
-      private final EventUpdate update;
+      private final List<EventUpdate> updates;
       private final EditScope scope;
 
-      private EditResult(EventUpdate update, EditScope scope) {
-        this.update = update;
+      private EditResult(List<EventUpdate> updates, EditScope scope) {
+        this.updates = updates;
         this.scope = scope;
       }
     }
