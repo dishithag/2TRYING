@@ -137,8 +137,15 @@ public class GuiController implements GuiFeatures {
     if (cal == null) {
       return;
     }
-    LocalTime startTime = input.getStartTime() == null ? WorkingHours.START : input.getStartTime();
-    LocalTime endTime = input.getEndTime() == null ? WorkingHours.END : input.getEndTime();
+    LocalTime startTime = input.getStartTime();
+    LocalTime endTime = input.getEndTime();
+    if (endTime == null) {
+      startTime = WorkingHours.START;
+      endTime = WorkingHours.END;
+    }
+    if (startTime == null) {
+      startTime = WorkingHours.START;
+    }
     LocalDateTime start = LocalDateTime.of(input.getDate(), startTime);
     LocalDateTime end = LocalDateTime.of(input.getDate(), endTime);
     EventInput.RecurrenceRule rule = input.getRecurrenceRule();

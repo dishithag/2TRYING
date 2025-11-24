@@ -94,14 +94,21 @@ public class CalendarImpl implements Calendar {
   @Override
   public Event createEvent(String subject, LocalDateTime start, LocalDateTime end) {
     validateRequiredFields(subject, start);
-    if (eventExists(subject, start, end)) {
+    LocalDateTime normalizedStart = start;
+    LocalDateTime normalizedEnd = end;
+    if (end == null) {
+      LocalDate date = start.toLocalDate();
+      normalizedStart = date.atTime(WorkingHours.START);
+      normalizedEnd = date.atTime(WorkingHours.END);
+    }
+    if (eventExists(subject, normalizedStart, normalizedEnd)) {
       throw new IllegalArgumentException(
           "Event with same subject, start, and end already exists");
     }
     Event event = new EventBuilder()
         .subject(subject)
-        .startDateTime(start)
-        .endDateTime(end)
+        .startDateTime(normalizedStart)
+        .endDateTime(normalizedEnd)
         .build();
     addEvent(event);
     return event;
@@ -119,9 +126,17 @@ public class CalendarImpl implements Calendar {
     validateRequiredFields(subject, start);
     validateSeriesInstanceShape(start, end, weekdays);
 
+    LocalDateTime normalizedStart = start;
+    LocalDateTime normalizedEnd = end;
+    if (end == null) {
+      LocalDate date = start.toLocalDate();
+      normalizedStart = date.atTime(WorkingHours.START);
+      normalizedEnd = date.atTime(WorkingHours.END);
+    }
+
     String seriesId = generateSeriesId();
     List<Event> created = createSeries(
-        subject, start, end, weekdays, seriesId, occurrences, null
+        subject, normalizedStart, normalizedEnd, weekdays, seriesId, occurrences, null
     );
     return created;
   }
@@ -135,9 +150,17 @@ public class CalendarImpl implements Calendar {
     validateSeriesInstanceShape(start, end, weekdays);
     validateRequiredFields(subject, start);
 
+    LocalDateTime normalizedStart = start;
+    LocalDateTime normalizedEnd = end;
+    if (end == null) {
+      LocalDate date = start.toLocalDate();
+      normalizedStart = date.atTime(WorkingHours.START);
+      normalizedEnd = date.atTime(WorkingHours.END);
+    }
+
     String seriesId = generateSeriesId();
     List<Event> created = createSeries(
-        subject, start, end, weekdays, seriesId, Integer.MAX_VALUE, endDate
+        subject, normalizedStart, normalizedEnd, weekdays, seriesId, Integer.MAX_VALUE, endDate
     );
     return created;
   }

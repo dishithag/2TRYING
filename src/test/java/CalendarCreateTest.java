@@ -21,7 +21,6 @@ import org.junit.Test;
 
 /**
  * Tests for creating, editing, and querying calendar events.
- * Designed to match the current CalendarImpl behaviour where a null end stays null.
  */
 public class CalendarCreateTest {
 
@@ -36,33 +35,35 @@ public class CalendarCreateTest {
   }
 
   /**
-   * Creating with a null end should auto-fill 17:00 on the same day.
+   * Creating with a null end should coerce to an all-day 08:00-17:00 span.
    */
   @Test
-  public void testCreateEvent_nullEnd_setsEndTo1700() {
+  public void testCreateEvent_nullEnd_setsToAllDay() {
     Event event = calendar.createEvent(
         "Independence Day block",
         LocalDateTime.of(2025, 7, 4, 0, 0),
         null
     );
 
-    assertEquals(LocalDateTime.of(2025, 7, 4, 0, 0), event.getStartDateTime());
+    assertEquals(LocalDateTime.of(2025, 7, 4, 8, 0), event.getStartDateTime());
     assertEquals(LocalDateTime.of(2025, 7, 4, 17, 0), event.getEndDateTime());
+    assertTrue(event.isAllDayEvent());
   }
 
   /**
-   * Midday start with null end should still end at 17:00.
+   * Midday start with null end should still become all-day.
    */
   @Test
-  public void testCreateEvent_middayStart_nullEnd_setsEndTo1700() {
+  public void testCreateEvent_middayStart_nullEnd_setsToAllDay() {
     Event event = calendar.createEvent(
         "Standup spillover",
         LocalDateTime.of(2025, 7, 4, 11, 45),
         null
     );
 
-    assertEquals(LocalDateTime.of(2025, 7, 4, 11, 45), event.getStartDateTime());
+    assertEquals(LocalDateTime.of(2025, 7, 4, 8, 0), event.getStartDateTime());
     assertEquals(LocalDateTime.of(2025, 7, 4, 17, 0), event.getEndDateTime());
+    assertTrue(event.isAllDayEvent());
   }
 
   /**
@@ -627,9 +628,8 @@ public class CalendarCreateTest {
         .build();
 
 
+    assertEquals(LocalDateTime.of(2025, 11, 10, 8, 0), event.getStartDateTime());
     assertEquals(LocalDateTime.of(2025, 11, 10, 17, 0), event.getEndDateTime());
-
-    assertEquals(LocalDateTime.of(2025, 11, 10, 12, 30), event.getStartDateTime());
   }
 
   /**
@@ -1024,7 +1024,7 @@ public class CalendarCreateTest {
         EnumSet.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), 2);
 
     assertEquals(2, series.size());
-    assertEquals(LocalDateTime.of(2025, 11, 10, 9, 0),
+    assertEquals(LocalDateTime.of(2025, 11, 10, 8, 0),
         series.get(0).getStartDateTime());
     assertEquals(LocalDateTime.of(2025, 11, 10, 17, 0),
         series.get(0).getEndDateTime());
