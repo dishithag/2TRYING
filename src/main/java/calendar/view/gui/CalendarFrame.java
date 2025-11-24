@@ -213,7 +213,10 @@ public class CalendarFrame extends JFrame implements GuiView {
       monthPanel.add(label);
     }
     LocalDate first = state.getVisibleMonth().atDay(1);
-    int offset = first.getDayOfWeek().getValue() % 7;
+    int offset = first.getDayOfWeek().getValue() - 1;
+    if (offset < 0) {
+      offset = 0;
+    }
     for (int i = 0; i < offset; i++) {
       monthPanel.add(new JLabel(""));
     }
