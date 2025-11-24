@@ -70,6 +70,13 @@ public class CalendarFrame extends JFrame implements GuiView {
   @Override
   public void render(CalendarUiState state) {
     this.currentState = state;
+    if (SwingUtilities.isEventDispatchThread()) {
+      updateCalendars(state);
+      updateHeader(state);
+      updateMonth(state);
+      updateEvents(state);
+      return;
+    }
     SwingUtilities.invokeLater(() -> {
       updateCalendars(state);
       updateHeader(state);
