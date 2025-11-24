@@ -206,11 +206,18 @@ public class CalendarImpl implements Calendar {
     EventProperty prop = parseProperty(property);
     Event updated;
 
-    if (target.isSeriesPart() && prop == EventProperty.START) {
-      EventBuilder builder = EventBuilder.from(target);
-      prop.apply(builder, newValue);
+    if (prop == EventProperty.START) {
       LocalDateTime parsedStart = LocalDateTime.parse(newValue);
-      if (!parsedStart.equals(target.getStartDateTime())) {
+      Duration originalDuration = Duration.between(target.getStartDateTime(),
+          target.getEndDateTime());
+      LocalDateTime adjustedEnd = target.getEndDateTime();
+      if (!adjustedEnd.isAfter(parsedStart)) {
+        adjustedEnd = parsedStart.plus(originalDuration);
+      }
+      EventBuilder builder = EventBuilder.from(target)
+          .startDateTime(parsedStart)
+          .endDateTime(adjustedEnd);
+      if (target.isSeriesPart() && !parsedStart.equals(target.getStartDateTime())) {
         builder.seriesId(null);
       }
       updated = builder.build();

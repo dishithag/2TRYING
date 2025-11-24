@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -789,6 +790,7 @@ public class CalendarFrame extends JFrame implements GuiView {
           showError("Select at least one property to edit");
           continue;
         }
+        updates.sort(Comparator.comparingInt(u -> propertyOrder(u.getProperty())));
         EditScope scope = EditScope.fromToken((String) scopeBox.getSelectedItem());
         return new EditResult(updates, scope);
       }
@@ -813,6 +815,25 @@ public class CalendarFrame extends JFrame implements GuiView {
         return null;
       }
       return LocalDateTime.of(date, time);
+    }
+
+    private int propertyOrder(EventProperty property) {
+      switch (property) {
+        case SUBJECT:
+          return 0;
+        case DESCRIPTION:
+          return 1;
+        case LOCATION:
+          return 2;
+        case STATUS:
+          return 3;
+        case END:
+          return 4;
+        case START:
+          return 5;
+        default:
+          return 6;
+      }
     }
 
     private final class EditResult {

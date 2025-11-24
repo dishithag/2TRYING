@@ -978,6 +978,30 @@ public class CalendarImplEdgeTest {
   }
 
   @Test
+  public void testEditEventStartAdjustsEndForSeriesInstance() {
+    CalendarImpl cal = new CalendarImpl();
+    LocalDateTime start = LocalDateTime.of(2025, 11, 18, 1, 0);
+
+    List<Event> series = cal.createEventSeries("Series", start,
+        LocalDateTime.of(2025, 11, 18, 2, 0),
+        EnumSet.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY), 3);
+
+    cal.editEvent("Series", start, "start", "2025-11-24T01:30");
+
+    List<Event> edited = cal.findEvents("Series", LocalDateTime.of(2025, 11, 24, 1, 30));
+    assertEquals(1, edited.size());
+    Event updated = edited.get(0);
+    assertFalse(updated.isSeriesPart());
+    assertEquals(LocalDateTime.of(2025, 11, 24, 2, 30), updated.getEndDateTime());
+
+    String remainingSeriesId = series.get(1).getSeriesId().get();
+    List<Event> remaining = cal.findEvents("Series", series.get(1).getStartDateTime());
+    assertEquals(1, remaining.size());
+    assertTrue(remaining.get(0).getSeriesId().isPresent());
+    assertEquals(remainingSeriesId, remaining.get(0).getSeriesId().get());
+  }
+
+  @Test
   public void testEditSeries_nonStart_callsEnforceNoDuplicate() {
     CalendarImpl cal = new CalendarImpl();
     LocalDateTime start = LocalDateTime.of(2025, 11, 10, 9, 0);
