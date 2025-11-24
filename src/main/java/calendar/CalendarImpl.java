@@ -274,16 +274,14 @@ public class CalendarImpl implements Calendar {
 
     if (prop == EventProperty.START) {
       String newSeriesId = generateSeriesId();
+      LocalDateTime templ = LocalDateTime.parse(newValue);
+      LocalTime targetTime = templ.toLocalTime();
       for (Event e : seriesToEdit) {
-        LocalDateTime templ = LocalDateTime.parse(newValue);
-        Duration duration = Duration.between(
-            e.getStartDateTime().toLocalTime(), e.getEndDateTime().toLocalTime()
-        );
         LocalDateTime adjustedStart = e.getStartDateTime()
             .toLocalDate()
-            .atTime(templ.toLocalTime());
+            .atTime(targetTime);
+        Duration duration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
         LocalDateTime adjustedEnd = adjustedStart.plus(duration);
-
         Event modified = EventBuilder.from(e)
             .startDateTime(adjustedStart)
             .endDateTime(adjustedEnd)
@@ -367,13 +365,13 @@ public class CalendarImpl implements Calendar {
 
     if (prop == EventProperty.START) {
       LocalDateTime templ = LocalDateTime.parse(newValue);
+      LocalTime targetTime = templ.toLocalTime();
       for (Event e : getEventsBySeriesId(seriesId)) {
-        java.time.Duration dur = java.time.Duration.between(
-            e.getStartDateTime(), e.getEndDateTime());
         LocalDateTime newStart = e.getStartDateTime()
             .toLocalDate()
-            .atTime(templ.toLocalTime());
-        LocalDateTime newEnd = newStart.plus(dur);
+            .atTime(targetTime);
+        Duration duration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
+        LocalDateTime newEnd = newStart.plus(duration);
         Event updated = EventBuilder.from(e)
             .startDateTime(newStart)
             .endDateTime(newEnd)

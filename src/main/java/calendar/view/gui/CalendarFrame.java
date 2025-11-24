@@ -750,8 +750,6 @@ public class CalendarFrame extends JFrame implements GuiView {
           return null;
         }
         List<EventUpdate> updates = new ArrayList<>();
-        LocalDateTime newStartValue = null;
-        boolean endSelected = false;
         if (subjectBox.isSelected()) {
           String subject = subjectField.getText().trim();
           if (subject.isEmpty()) {
@@ -765,21 +763,14 @@ public class CalendarFrame extends JFrame implements GuiView {
           if (start == null) {
             continue;
           }
-          newStartValue = start;
           updates.add(new EventUpdate(EventProperty.START, start, null));
         }
         if (endBox.isSelected()) {
-          endSelected = true;
           LocalDateTime end = parseEditDateTime(endDateField.getText(), endTimeField);
           if (end == null) {
             continue;
           }
           updates.add(new EventUpdate(EventProperty.END, end, null));
-        }
-        if (newStartValue != null && !endSelected) {
-          Duration duration = Duration.between(selected.getStart(), selected.getEnd());
-          LocalDateTime adjustedEnd = newStartValue.plus(duration);
-          updates.add(new EventUpdate(EventProperty.END, adjustedEnd, null));
         }
         if (descriptionBox.isSelected()) {
           updates.add(new EventUpdate(EventProperty.DESCRIPTION, null,
@@ -798,33 +789,9 @@ public class CalendarFrame extends JFrame implements GuiView {
           showError("Select at least one property to edit");
           continue;
         }
-        updates = reorderEndBeforeStart(updates);
         EditScope scope = EditScope.fromToken((String) scopeBox.getSelectedItem());
         return new EditResult(updates, scope);
       }
-    }
-
-    private List<EventUpdate> reorderEndBeforeStart(List<EventUpdate> updates) {
-      boolean hasStart = false;
-      List<EventUpdate> ends = new ArrayList<>();
-      List<EventUpdate> rest = new ArrayList<>();
-      for (EventUpdate update : updates) {
-        if (update.getProperty() == EventProperty.END) {
-          ends.add(update);
-        } else {
-          rest.add(update);
-        }
-        if (update.getProperty() == EventProperty.START) {
-          hasStart = true;
-        }
-      }
-      if (hasStart && !ends.isEmpty()) {
-        List<EventUpdate> ordered = new ArrayList<>();
-        ordered.addAll(ends);
-        ordered.addAll(rest);
-        return ordered;
-      }
-      return updates;
     }
 
     private LocalDateTime parseEditDateTime(String dateText, JComboBox<String> timeField) {
