@@ -372,8 +372,11 @@ public class CalendarImpl implements Calendar {
         LocalDateTime newStart = e.getStartDateTime()
             .toLocalDate()
             .atTime(targetTime);
-        Duration duration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
-        LocalDateTime newEnd = newStart.plus(duration);
+        LocalDateTime newEnd = e.getEndDateTime();
+        if (!newEnd.isAfter(newStart)) {
+          Duration duration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
+          newEnd = newStart.plus(duration);
+        }
         Event updated = EventBuilder.from(e)
             .startDateTime(newStart)
             .endDateTime(newEnd)
