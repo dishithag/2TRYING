@@ -364,46 +364,54 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private EventInput gatherEventInput(LocalDate date) {
-    JComboBox<String> startCombo = new JComboBox<>(timeOptions());
-    startCombo.setEditable(true);
-    JComboBox<String> endCombo = new JComboBox<>(timeOptions());
-    endCombo.setEditable(true);
+    JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
+    panel.add(new JLabel("Fields marked * are required."));
     JLabel subjectLabel = requiredLabel("Subject");
     JTextField subjectField = new JTextField();
+    panel.add(subjectLabel);
+    panel.add(subjectField);
+
     JLabel startLabel = requiredLabel("Start time");
+    JComboBox<String> startCombo = new JComboBox<>(timeOptions());
+    startCombo.setEditable(true);
+    panel.add(startLabel);
+    panel.add(startCombo);
+
     JLabel endLabel = new JLabel("End time");
+    JComboBox<String> endCombo = new JComboBox<>(timeOptions());
+    endCombo.setEditable(true);
+    panel.add(endLabel);
+    panel.add(endCombo);
+
     JTextField locationField = new JTextField();
+    panel.add(new JLabel("Location"));
+    panel.add(locationField);
+
     JTextField descriptionField = new JTextField();
+    panel.add(new JLabel("Description"));
+    panel.add(descriptionField);
+
     JComboBox<String> visibility = new JComboBox<>(new String[] {"Public", "Private"});
+    panel.add(new JLabel("Visibility"));
+    panel.add(visibility);
+
+    JTextField weekdaysField = new JTextField();
+    panel.add(new JLabel("Recurrence weekdays (e.g., MTWRFSU)"));
+    panel.add(weekdaysField);
+
     JComboBox<String> recurrenceChoice = new JComboBox<>(
         new String[] {"None", "Repeat for N times", "Repeat until date"});
-    JTextField weekdaysField = new JTextField();
+    panel.add(new JLabel("Recurrence"));
+    panel.add(recurrenceChoice);
+
     JTextField countField = new JTextField();
+    panel.add(new JLabel("Occurrences (for N times)"));
+    panel.add(countField);
+
     JComboBox<String> untilYear = buildYearCombo();
     JComboBox<String> untilMonth = buildMonthCombo();
     JComboBox<String> untilDay = buildDayCombo();
     attachUntilListeners(untilYear, untilMonth, untilDay);
-
-    JPanel panel = new JPanel(new GridLayout(0, 1, 4, 4));
-    panel.add(new JLabel("Fields marked * are required."));
-    panel.add(subjectLabel);
-    panel.add(subjectField);
-    panel.add(startLabel);
-    panel.add(startCombo);
-    panel.add(endLabel);
-    panel.add(endCombo);
-    panel.add(new JLabel("Location"));
-    panel.add(locationField);
-    panel.add(new JLabel("Description"));
-    panel.add(descriptionField);
-    panel.add(new JLabel("Visibility"));
-    panel.add(visibility);
-    panel.add(new JLabel("Recurrence weekdays (e.g., MTWRFSU)"));
-    panel.add(weekdaysField);
-    panel.add(new JLabel("Recurrence"));
-    panel.add(recurrenceChoice);
-    panel.add(new JLabel("Occurrences (for N times)"));
-    panel.add(countField);
     panel.add(new JLabel("Until date"));
     panel.add(untilYear);
     panel.add(untilMonth);
