@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1101,15 +1102,29 @@ public class CalendarImplEdgeTest {
     List<Event> allEvents = cal.getAllEvents();
     assertEquals(3, allEvents.size());
 
-    Event modifiedEvent = allEvents.stream()
+    List<Event> modifiedEvents = allEvents.stream()
         .filter(e -> e.getStartDateTime().getHour() == 10)
-        .findFirst()
-        .get();
+        .collect(Collectors.toList());
 
-    String newSeriesId = modifiedEvent.getSeriesId().get();
-    assertFalse(newSeriesId.equals(oldSeriesId));
+    assertEquals(2, modifiedEvents.size());
+    assertTrue(modifiedEvents.stream().allMatch(e -> !e.isSeriesPart()));
+  }
 
-    List<LocalDateTime> newStarts = index.starts(newSeriesId);
-    assertEquals(2, newStarts.size());
+  @Test
+  public void testEditEventsFromDate_startKeepsEndAndDropsSeriesId() {
+    CalendarImpl cal = new CalendarImpl();
+    LocalDateTime start = LocalDateTime.of(2025, 11, 19, 1, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 11, 19, 2, 0);
+    cal.createEventSeries("Series", start, end,
+        EnumSet.of(DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY), 2);
+
+    cal.editEventsFromDate("Series", start, "start", "2025-11-19T01:30");
+
+    List<Event> events = cal.getAllEvents();
+    assertEquals(2, events.size());
+    assertEquals(LocalDateTime.of(2025, 11, 19, 1, 30), events.get(0).getStartDateTime());
+    assertEquals(LocalDateTime.of(2025, 11, 19, 2, 0), events.get(0).getEndDateTime());
+    assertFalse(events.get(0).isSeriesPart());
+    assertFalse(events.get(1).isSeriesPart());
   }
 }

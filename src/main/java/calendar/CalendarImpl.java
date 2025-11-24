@@ -273,19 +273,21 @@ public class CalendarImpl implements Calendar {
     EventProperty prop = parseProperty(property);
 
     if (prop == EventProperty.START) {
-      String newSeriesId = generateSeriesId();
       LocalDateTime templ = LocalDateTime.parse(newValue);
       LocalTime targetTime = templ.toLocalTime();
       for (Event e : seriesToEdit) {
         LocalDateTime adjustedStart = e.getStartDateTime()
             .toLocalDate()
             .atTime(targetTime);
-        Duration duration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
-        LocalDateTime adjustedEnd = adjustedStart.plus(duration);
+        Duration originalDuration = Duration.between(e.getStartDateTime(), e.getEndDateTime());
+        LocalDateTime adjustedEnd = e.getEndDateTime();
+        if (!adjustedEnd.isAfter(adjustedStart)) {
+          adjustedEnd = adjustedStart.plus(originalDuration);
+        }
         Event modified = EventBuilder.from(e)
             .startDateTime(adjustedStart)
             .endDateTime(adjustedEnd)
-            .seriesId(newSeriesId)
+            .seriesId(null)
             .build();
 
         enforceNoDuplicateOnReplace(e, modified);

@@ -9,6 +9,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -240,8 +241,8 @@ public class CalendarEditTest {
   /**
    * Test editing events from date would create duplicate throws exception.
    */
-  @Test(expected = IllegalArgumentException.class)
-  public void testEditEventsFromDate_createsDuplicate() {
+  @Test
+  public void testEditEventsFromDate_adjustsForwardWithoutDuplicating() {
     LocalDateTime start = LocalDateTime.of(2025, 11, 10, 9, 0);
     LocalDateTime end = LocalDateTime.of(2025, 11, 10, 10, 0);
 
@@ -257,6 +258,14 @@ public class CalendarEditTest {
         LocalDateTime.of(2025, 11, 11, 9, 0),
         "start",
         "2025-11-11T08:00");
+
+    List<Event> events = calendar.getAllEvents();
+    assertEquals(4, events.size());
+    List<LocalDateTime> starts = events.stream()
+        .map(Event::getStartDateTime)
+        .collect(Collectors.toList());
+    assertTrue(starts.contains(LocalDateTime.of(2025, 11, 11, 8, 0)));
+    assertTrue(starts.contains(LocalDateTime.of(2025, 11, 12, 8, 0)));
   }
 
   /**
