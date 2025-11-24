@@ -15,7 +15,6 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -96,12 +95,7 @@ public class CalendarFrameSelectDateTest {
         YearMonth.of(2023, 11), LocalDate.of(2023, 11, 1), Collections.emptyMap(),
         Collections.emptyList());
 
-    CountDownLatch latch = new CountDownLatch(1);
-    SwingUtilities.invokeLater(() -> {
-      frame.render(state);
-      latch.countDown();
-    });
-    latch.await();
+    SwingUtilities.invokeAndWait(() -> frame.render(state));
 
     Field monthPanelField = CalendarFrame.class.getDeclaredField("monthPanel");
     monthPanelField.setAccessible(true);
