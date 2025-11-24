@@ -203,7 +203,19 @@ public class CalendarImpl implements Calendar {
     }
     Event target = matches.get(0);
     EventProperty prop = parseProperty(property);
-    Event updated = applyProperty(target, prop, newValue);
+    Event updated;
+
+    if (target.isSeriesPart() && prop == EventProperty.START) {
+      EventBuilder builder = EventBuilder.from(target);
+      prop.apply(builder, newValue);
+      LocalDateTime parsedStart = LocalDateTime.parse(newValue);
+      if (!parsedStart.equals(target.getStartDateTime())) {
+        builder.seriesId(null);
+      }
+      updated = builder.build();
+    } else {
+      updated = applyProperty(target, prop, newValue);
+    }
     enforceNoDuplicateOnReplace(target, updated);
     replaceEvent(target, updated);
   }

@@ -1049,8 +1049,11 @@ public class CalendarImplEdgeTest {
     calendar.SeriesIndex index = (calendar.SeriesIndex) field.get(cal);
 
     List<LocalDateTime> starts = index.starts(oldSeriesId);
-    assertEquals(1, starts.size());
-    assertEquals(LocalDateTime.of(2025, 11, 10, 8, 30), starts.get(0));
+    assertTrue(starts.isEmpty());
+
+    Event updated = cal.getAllEvents().get(0);
+    assertFalse(updated.isSeriesPart());
+    assertEquals(LocalDateTime.of(2025, 11, 10, 8, 30), updated.getStartDateTime());
   }
 
 
