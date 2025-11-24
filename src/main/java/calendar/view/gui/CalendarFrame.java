@@ -119,18 +119,6 @@ public class CalendarFrame extends JFrame implements GuiView {
     newCalendar.addActionListener(e -> promptCreateCalendar());
     panel.add(newCalendar);
 
-    JButton renameCalendar = new JButton("Rename");
-    renameCalendar.addActionListener(e -> promptRenameCalendar());
-    panel.add(renameCalendar);
-
-    JButton changeZone = new JButton("Change Timezone");
-    changeZone.addActionListener(e -> promptChangeZone());
-    panel.add(changeZone);
-
-    JButton export = new JButton("Export");
-    export.addActionListener(e -> promptExport());
-    panel.add(export);
-
     JButton prev = new JButton("◀");
     prev.addActionListener(e -> navigateMonth(-1));
     panel.add(prev);
@@ -288,7 +276,9 @@ public class CalendarFrame extends JFrame implements GuiView {
     vm.getDescription().ifPresent(desc -> sb.append("Description: ").append(desc).append("\n"));
     sb.append("Visibility: ").append(vm.isPublicEvent() ? "public" : "private");
     if (vm.isSeriesPart()) {
-      sb.append("\nPart of a series");
+      sb.append("\nSeries: part of a series");
+    } else {
+      sb.append("\nSeries: single event");
     }
     showMessage(sb.toString());
   }
@@ -311,42 +301,6 @@ public class CalendarFrame extends JFrame implements GuiView {
     try {
       ZoneId zone = ZoneId.of(tz.trim());
       features.createCalendar(name.trim(), zone);
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptRenameCalendar() {
-    String name = JOptionPane.showInputDialog(this, "New calendar name:");
-    if (name == null || name.isBlank()) {
-      return;
-    }
-    try {
-      features.renameActiveCalendar(name.trim());
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptChangeZone() {
-    String tz = JOptionPane.showInputDialog(this, "Timezone (e.g., Europe/Paris):");
-    if (tz == null || tz.isBlank()) {
-      return;
-    }
-    try {
-      features.changeActiveCalendarZone(ZoneId.of(tz.trim()));
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptExport() {
-    String path = JOptionPane.showInputDialog(this, "Export file (.csv/.ics/.ical):");
-    if (path == null || path.isBlank()) {
-      return;
-    }
-    try {
-      features.exportCalendar(path.trim());
     } catch (Exception ex) {
       showError(ex.getMessage());
     }
