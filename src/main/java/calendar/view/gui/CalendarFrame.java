@@ -457,6 +457,10 @@ public class CalendarFrame extends JFrame implements GuiView {
   private EventInput.RecurrenceRule parseRecurrence(String choice, String weekdays,
       String count, String until) {
     if (choice == null || "None".equals(choice)) {
+      if (!weekdays.trim().isEmpty() || !count.trim().isEmpty() || !until.trim().isEmpty()) {
+        showError("Leave recurrence fields blank or choose a recurrence option");
+        return null;
+      }
       return EventInput.RecurrenceRule.none();
     }
     Set<DayOfWeek> weekdaySet = parseWeekdays(weekdays);
