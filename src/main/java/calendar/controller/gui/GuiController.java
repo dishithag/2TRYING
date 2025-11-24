@@ -227,14 +227,16 @@ public class GuiController implements GuiFeatures {
     if (cal == null) {
       return;
     }
-    Map<LocalDate, List<EventViewModel>> monthEvents = eventsByDate(cal, visibleMonth);
+    Map<String, SeriesStats> seriesStats = seriesStats(cal);
+    Map<LocalDate, List<EventViewModel>> monthEvents = eventsByDate(cal, visibleMonth, seriesStats);
     List<EventViewModel> dayEvents = monthEvents.getOrDefault(selectedDate, List.of());
     CalendarUiState state = new CalendarUiState(calendarSummaries(), activeCalendar,
         cal.getZoneId(), visibleMonth, selectedDate, monthEvents, dayEvents);
     view.render(state);
   }
 
-  private Map<LocalDate, List<EventViewModel>> eventsByDate(Calendar cal, YearMonth month) {
+  private Map<LocalDate, List<EventViewModel>> eventsByDate(Calendar cal, YearMonth month,
+                                                            Map<String, SeriesStats> seriesStats) {
     LocalDateTime start = month.atDay(1).atStartOfDay();
     LocalDateTime end = month.atEndOfMonth().atTime(LocalTime.MAX);
     List<Event> events = cal.getEventsInRange(start, end);
@@ -242,7 +244,7 @@ public class GuiController implements GuiFeatures {
     for (Event event : events) {
       LocalDate date = event.getStartDateTime().toLocalDate();
       grouped.computeIfAbsent(date, d -> new ArrayList<>())
-          .add(toViewModel(event));
+          .add(toViewModel(event, seriesStats));
     }
     for (List<EventViewModel> list : grouped.values()) {
       list.sort((a, b) -> a.getStart().compareTo(b.getStart()));
@@ -250,10 +252,46 @@ public class GuiController implements GuiFeatures {
     return grouped;
   }
 
-  private EventViewModel toViewModel(Event event) {
+  private EventViewModel toViewModel(Event event, Map<String, SeriesStats> seriesStats) {
+    SeriesStats stats = event.getSeriesId().map(seriesStats::get).orElse(null);
     return new EventViewModel(event.getSubject(), event.getStartDateTime(), event.getEndDateTime(),
         event.getLocation().orElse(null), event.getDescription().orElse(null), event.isPublic(),
-        event.isSeriesPart());
+        event.isSeriesPart(), stats == null ? null : stats.count,
+        stats == null ? null : stats.firstStart.toLocalDate(),
+        stats == null ? null : stats.lastStart.toLocalDate());
+  }
+
+  private Map<String, SeriesStats> seriesStats(Calendar cal) {
+    Map<String, SeriesStats> stats = new HashMap<>();
+    for (Event event : cal.getAllEvents()) {
+      event.getSeriesId().ifPresent(id -> {
+        SeriesStats existing = stats.get(id);
+        if (existing == null) {
+          stats.put(id, new SeriesStats(1, event.getStartDateTime(), event.getStartDateTime()));
+        } else {
+          stats.put(id, existing.accumulate(event.getStartDateTime()));
+        }
+      });
+    }
+    return stats;
+  }
+
+  private static final class SeriesStats {
+    private final int count;
+    private final LocalDateTime firstStart;
+    private final LocalDateTime lastStart;
+
+    private SeriesStats(int count, LocalDateTime firstStart, LocalDateTime lastStart) {
+      this.count = count;
+      this.firstStart = firstStart;
+      this.lastStart = lastStart;
+    }
+
+    private SeriesStats accumulate(LocalDateTime start) {
+      return new SeriesStats(count + 1,
+          firstStart.isAfter(start) ? start : firstStart,
+          lastStart.isBefore(start) ? start : lastStart);
+    }
   }
 
   private Calendar requireActiveCalendar() {

@@ -1,5 +1,6 @@
 package calendar.view.gui;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +20,9 @@ public final class EventViewModel {
   private final String description;
   private final boolean publicEvent;
   private final boolean seriesPart;
+  private final Integer seriesOccurrences;
+  private final LocalDate seriesFirstDate;
+  private final LocalDate seriesLastDate;
 
   /**
    * Creates an event view model.
@@ -33,7 +37,9 @@ public final class EventViewModel {
    */
   public EventViewModel(String subject, LocalDateTime start, LocalDateTime end,
                         String location, String description,
-                        boolean publicEvent, boolean seriesPart) {
+                        boolean publicEvent, boolean seriesPart,
+                        Integer seriesOccurrences, LocalDate seriesFirstDate,
+                        LocalDate seriesLastDate) {
     this.subject = Objects.requireNonNull(subject, "subject");
     this.start = Objects.requireNonNull(start, "start");
     this.end = Objects.requireNonNull(end, "end");
@@ -41,6 +47,9 @@ public final class EventViewModel {
     this.description = description;
     this.publicEvent = publicEvent;
     this.seriesPart = seriesPart;
+    this.seriesOccurrences = seriesOccurrences;
+    this.seriesFirstDate = seriesFirstDate;
+    this.seriesLastDate = seriesLastDate;
   }
 
   public String getSubject() {
@@ -69,6 +78,18 @@ public final class EventViewModel {
 
   public boolean isSeriesPart() {
     return seriesPart;
+  }
+
+  public Optional<Integer> getSeriesOccurrences() {
+    return Optional.ofNullable(seriesOccurrences);
+  }
+
+  public Optional<LocalDate> getSeriesFirstDate() {
+    return Optional.ofNullable(seriesFirstDate);
+  }
+
+  public Optional<LocalDate> getSeriesLastDate() {
+    return Optional.ofNullable(seriesLastDate);
   }
 
   /**

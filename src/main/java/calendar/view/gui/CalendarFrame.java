@@ -261,6 +261,7 @@ public class CalendarFrame extends JFrame implements GuiView {
     }
     if (vm.isSeriesPart()) {
       sb.append(" [series]");
+      appendSeriesMeta(vm, sb);
     }
     vm.getDescription().ifPresent(desc -> sb.append("<br>Description: ").append(desc));
     sb.append("</html>");
@@ -275,12 +276,33 @@ public class CalendarFrame extends JFrame implements GuiView {
     vm.getLocation().ifPresent(loc -> sb.append("Location: ").append(loc).append("\n"));
     vm.getDescription().ifPresent(desc -> sb.append("Description: ").append(desc).append("\n"));
     sb.append("Visibility: ").append(vm.isPublicEvent() ? "public" : "private");
+    appendSeriesDetails(vm, sb);
+    showMessage(sb.toString());
+  }
+
+  private void appendSeriesMeta(EventViewModel vm, StringBuilder sb) {
+    vm.getSeriesOccurrences().ifPresent(count -> sb.append(" (" + count + " total)"));
+    if (vm.getSeriesFirstDate().isPresent() || vm.getSeriesLastDate().isPresent()) {
+      sb.append("<br>Span: ");
+      vm.getSeriesFirstDate().ifPresent(date -> sb.append(date));
+      sb.append(" – ");
+      vm.getSeriesLastDate().ifPresent(date -> sb.append(date));
+    }
+  }
+
+  private void appendSeriesDetails(EventViewModel vm, StringBuilder sb) {
     if (vm.isSeriesPart()) {
       sb.append("\nSeries: part of a series");
+      vm.getSeriesOccurrences().ifPresent(count -> sb.append(" (" + count + " total occurrences)"));
+      if (vm.getSeriesFirstDate().isPresent() || vm.getSeriesLastDate().isPresent()) {
+        sb.append("\nSeries span: ");
+        vm.getSeriesFirstDate().ifPresent(date -> sb.append(date));
+        sb.append(" to ");
+        vm.getSeriesLastDate().ifPresent(date -> sb.append(date));
+      }
     } else {
       sb.append("\nSeries: single event");
     }
-    showMessage(sb.toString());
   }
 
   private void navigateMonth(int delta) {
