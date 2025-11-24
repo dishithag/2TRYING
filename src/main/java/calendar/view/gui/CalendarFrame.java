@@ -46,6 +46,7 @@ public class CalendarFrame extends JFrame implements GuiView {
   private final JList<EventViewModel> eventList = new JList<>(eventListModel);
   private final JLabel selectedDateLabel = new JLabel();
   private CalendarUiState currentState;
+  private boolean updatingCalendars;
 
   /**
    * Creates a calendar frame.
@@ -107,7 +108,7 @@ public class CalendarFrame extends JFrame implements GuiView {
     panel.add(new JLabel("Calendar:"));
     panel.add(calendarCombo);
     calendarCombo.addActionListener(e -> {
-      if (features != null && calendarCombo.getSelectedItem() != null) {
+      if (!updatingCalendars && features != null && calendarCombo.getSelectedItem() != null) {
         features.selectCalendar(calendarCombo.getSelectedItem().toString());
       }
     });
@@ -171,13 +172,18 @@ public class CalendarFrame extends JFrame implements GuiView {
   }
 
   private void updateCalendars(CalendarUiState state) {
-    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-    for (CalendarSummary summary : state.getCalendars()) {
-      model.addElement(summary.getName());
+    updatingCalendars = true;
+    try {
+      DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+      for (CalendarSummary summary : state.getCalendars()) {
+        model.addElement(summary.getName());
+      }
+      calendarCombo.setModel(model);
+      calendarCombo.setSelectedItem(state.getActiveCalendar());
+      zoneLabel.setText("Timezone: " + state.getActiveZone());
+    } finally {
+      updatingCalendars = false;
     }
-    calendarCombo.setModel(model);
-    calendarCombo.setSelectedItem(state.getActiveCalendar());
-    zoneLabel.setText("Timezone: " + state.getActiveZone());
   }
 
   private void updateHeader(CalendarUiState state) {
