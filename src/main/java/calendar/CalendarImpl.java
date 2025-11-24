@@ -95,21 +95,15 @@ public class CalendarImpl implements Calendar {
   @Override
   public Event createEvent(String subject, LocalDateTime start, LocalDateTime end) {
     validateRequiredFields(subject, start);
-    LocalDateTime normalizedStart = start;
-    LocalDateTime normalizedEnd = end;
-    if (end == null) {
-      LocalDate date = start.toLocalDate();
-      normalizedStart = date.atTime(WorkingHours.START);
-      normalizedEnd = date.atTime(WorkingHours.END);
-    }
-    if (eventExists(subject, normalizedStart, normalizedEnd)) {
+    StartEnd normalized = normalizeStartEnd(start, end);
+    if (eventExists(subject, normalized.start, normalized.end)) {
       throw new IllegalArgumentException(
           "Event with same subject, start, and end already exists");
     }
     Event event = new EventBuilder()
         .subject(subject)
-        .startDateTime(normalizedStart)
-        .endDateTime(normalizedEnd)
+        .startDateTime(normalized.start)
+        .endDateTime(normalized.end)
         .build();
     addEvent(event);
     return event;
@@ -127,17 +121,11 @@ public class CalendarImpl implements Calendar {
     validateRequiredFields(subject, start);
     validateSeriesInstanceShape(start, end, weekdays);
 
-    LocalDateTime normalizedStart = start;
-    LocalDateTime normalizedEnd = end;
-    if (end == null) {
-      LocalDate date = start.toLocalDate();
-      normalizedStart = date.atTime(WorkingHours.START);
-      normalizedEnd = date.atTime(WorkingHours.END);
-    }
+    StartEnd normalized = normalizeStartEnd(start, end);
 
     String seriesId = generateSeriesId();
     List<Event> created = createSeries(
-        subject, normalizedStart, normalizedEnd, weekdays, seriesId, occurrences, null
+        subject, normalized.start, normalized.end, weekdays, seriesId, occurrences, null
     );
     return created;
   }
@@ -151,17 +139,11 @@ public class CalendarImpl implements Calendar {
     validateSeriesInstanceShape(start, end, weekdays);
     validateRequiredFields(subject, start);
 
-    LocalDateTime normalizedStart = start;
-    LocalDateTime normalizedEnd = end;
-    if (end == null) {
-      LocalDate date = start.toLocalDate();
-      normalizedStart = date.atTime(WorkingHours.START);
-      normalizedEnd = date.atTime(WorkingHours.END);
-    }
+    StartEnd normalized = normalizeStartEnd(start, end);
 
     String seriesId = generateSeriesId();
     List<Event> created = createSeries(
-        subject, normalizedStart, normalizedEnd, weekdays, seriesId, Integer.MAX_VALUE, endDate
+        subject, normalized.start, normalized.end, weekdays, seriesId, Integer.MAX_VALUE, endDate
     );
     return created;
   }
@@ -190,6 +172,16 @@ public class CalendarImpl implements Calendar {
   @Override
   public List<Event> findEvents(String subject, LocalDateTime start) {
     return findEvents(subject, start, null);
+  }
+
+  private StartEnd normalizeStartEnd(LocalDateTime start, LocalDateTime end) {
+    if (end != null) {
+      return new StartEnd(start, end);
+    }
+    LocalDate date = start.toLocalDate();
+    LocalDateTime normalizedStart = date.atTime(WorkingHours.START);
+    LocalDateTime normalizedEnd = date.atTime(WorkingHours.END);
+    return new StartEnd(normalizedStart, normalizedEnd);
   }
 
   @Override
@@ -655,6 +647,16 @@ public class CalendarImpl implements Calendar {
     }
     if (start == null) {
       throw new IllegalArgumentException("Start date/time required");
+    }
+  }
+
+  private static final class StartEnd {
+    private final LocalDateTime start;
+    private final LocalDateTime end;
+
+    private StartEnd(LocalDateTime start, LocalDateTime end) {
+      this.start = start;
+      this.end = end;
     }
   }
 
