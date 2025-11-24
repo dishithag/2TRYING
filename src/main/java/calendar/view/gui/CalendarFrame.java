@@ -195,7 +195,7 @@ public class CalendarFrame extends JFrame implements GuiView {
     Map<LocalDate, List<EventViewModel>> map = state.getEventsByDate();
     for (int day = 1; day <= length; day++) {
       LocalDate date = state.getVisibleMonth().atDay(day);
-      JButton button = new JButton(String.valueOf(day));
+      JButton button = new JButton(String.valueOf(date.getDayOfMonth()));
       button.setEnabled(true);
       button.setFocusable(false);
       button.setOpaque(true);

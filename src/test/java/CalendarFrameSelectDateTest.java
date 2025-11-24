@@ -7,8 +7,8 @@ import calendar.view.gui.EventInput;
 import calendar.view.gui.EventReference;
 import calendar.view.gui.EventUpdate;
 import calendar.view.gui.GuiFeatures;
-import java.lang.reflect.Field;
 import java.awt.GraphicsEnvironment;
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -19,8 +19,8 @@ import java.util.concurrent.CountDownLatch;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.junit.Test;
 import org.junit.Assume;
+import org.junit.Test;
 
 /**
  * Verifies that clicking a day in the month grid notifies the controller with the chosen date.
@@ -71,7 +71,8 @@ public class CalendarFrameSelectDateTest {
     }
 
     @Override
-    public void editEvent(EventReference reference, EventUpdate update, calendar.controller.EditScope scope) {
+    public void editEvent(EventReference reference, EventUpdate update,
+        calendar.controller.EditScope scope) {
       // unused
     }
 
@@ -89,9 +90,11 @@ public class CalendarFrameSelectDateTest {
     RecordingFeatures features = new RecordingFeatures();
     frame.setFeatures(features);
 
-    CalendarSummary summary = new CalendarSummary("Default", ZoneId.of("America/New_York"), "#000000");
+    CalendarSummary summary = new CalendarSummary("Default", ZoneId.of("America/New_York"),
+        "#000000");
     CalendarUiState state = new CalendarUiState(List.of(summary), "Default", summary.getZoneId(),
-        YearMonth.of(2023, 11), LocalDate.of(2023, 11, 1), Collections.emptyMap(), Collections.emptyList());
+        YearMonth.of(2023, 11), LocalDate.of(2023, 11, 1), Collections.emptyMap(),
+        Collections.emptyList());
 
     CountDownLatch latch = new CountDownLatch(1);
     SwingUtilities.invokeLater(() -> {
