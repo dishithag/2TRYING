@@ -639,9 +639,18 @@ public class CalendarFrame extends JFrame implements GuiView {
     if (result == null) {
       return;
     }
+    String currentSubject = ref.getSubject();
+    LocalDateTime currentStart = ref.getStart();
     for (EventUpdate update : result.updates) {
       try {
-        features.editEvent(ref, update, result.scope);
+        EventReference currentRef = new EventReference(currentSubject, currentStart);
+        features.editEvent(currentRef, update, result.scope);
+        if (update.getProperty() == EventProperty.SUBJECT) {
+          currentSubject = update.getNewValue();
+        }
+        if (update.getProperty() == EventProperty.START && update.getNewDateTime() != null) {
+          currentStart = update.getNewDateTime();
+        }
       } catch (Exception ex) {
         showError(ex.getMessage());
         return;
@@ -695,14 +704,22 @@ public class CalendarFrame extends JFrame implements GuiView {
       panel.add(subjectField);
 
       JCheckBox startBox = new JCheckBox("Start", false);
-      JTextField startField = new JTextField(selected.getStart().toString());
       panel.add(startBox);
-      panel.add(startField);
+      JTextField startDateField = new JTextField(selected.getStart().toLocalDate().toString());
+      panel.add(startDateField);
+      JComboBox<String> startTimeField = new JComboBox<>(timeOptions());
+      startTimeField.setEditable(true);
+      startTimeField.setSelectedItem(selected.getStart().toLocalTime().toString());
+      panel.add(startTimeField);
 
       JCheckBox endBox = new JCheckBox("End", false);
-      JTextField endField = new JTextField(selected.getEnd().toString());
       panel.add(endBox);
-      panel.add(endField);
+      JTextField endDateField = new JTextField(selected.getEnd().toLocalDate().toString());
+      panel.add(endDateField);
+      JComboBox<String> endTimeField = new JComboBox<>(timeOptions());
+      endTimeField.setEditable(true);
+      endTimeField.setSelectedItem(selected.getEnd().toLocalTime().toString());
+      panel.add(endTimeField);
 
       JCheckBox descriptionBox = new JCheckBox("Description", false);
       JTextField descriptionField = new JTextField(selected.getDescription().orElse(""));
@@ -741,14 +758,14 @@ public class CalendarFrame extends JFrame implements GuiView {
           updates.add(new EventUpdate(EventProperty.SUBJECT, null, subject));
         }
         if (startBox.isSelected()) {
-          LocalDateTime start = parseEditDateTime(startField.getText());
+          LocalDateTime start = parseEditDateTime(startDateField.getText(), startTimeField);
           if (start == null) {
             continue;
           }
           updates.add(new EventUpdate(EventProperty.START, start, null));
         }
         if (endBox.isSelected()) {
-          LocalDateTime end = parseEditDateTime(endField.getText());
+          LocalDateTime end = parseEditDateTime(endDateField.getText(), endTimeField);
           if (end == null) {
             continue;
           }
@@ -776,23 +793,25 @@ public class CalendarFrame extends JFrame implements GuiView {
       }
     }
 
-    private LocalDateTime parseEditDateTime(String text) {
-      String value = text == null ? "" : text.trim();
-      if (value.isEmpty()) {
-        showError("Enter a date-time in yyyy-MM-dd'T'HH:mm");
+    private LocalDateTime parseEditDateTime(String dateText, JComboBox<String> timeField) {
+      String dateValue = dateText == null ? "" : dateText.trim();
+      if (dateValue.isEmpty()) {
+        showError("Enter a date in yyyy-MM-dd");
         return null;
       }
+      LocalDate date;
       try {
-        return LocalDateTime.parse(value);
-      } catch (Exception e) {
-        try {
-          DateTimeFormatter alt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-          return LocalDateTime.parse(value, alt);
-        } catch (Exception ex) {
-          showError("Date-time must be yyyy-MM-dd'T'HH:mm or yyyy-MM-dd HH:mm");
-          return null;
-        }
+        date = LocalDate.parse(dateValue);
+      } catch (DateTimeParseException ex) {
+        showError("Date must be yyyy-MM-dd");
+        return null;
       }
+      LocalTime time = parseComboTime(timeField);
+      if (time == null) {
+        showError("Enter a valid time as HH:mm");
+        return null;
+      }
+      return LocalDateTime.of(date, time);
     }
 
     private final class EditResult {
