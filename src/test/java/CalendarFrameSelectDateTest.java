@@ -97,26 +97,31 @@ public class CalendarFrameSelectDateTest {
 
     SwingUtilities.invokeAndWait(() -> frame.render(state));
 
-    Field monthPanelField = CalendarFrame.class.getDeclaredField("monthPanel");
-    monthPanelField.setAccessible(true);
-    JPanel monthPanel = (JPanel) monthPanelField.get(frame);
-
-    JButton target = null;
-    for (java.awt.Component component : monthPanel.getComponents()) {
-      if (component instanceof JButton) {
-        JButton button = (JButton) component;
-        if ("5".equals(button.getText())) {
-          target = button;
-          break;
+    JButton[] target = new JButton[1];
+    SwingUtilities.invokeAndWait(() -> {
+      try {
+        Field monthPanelField = CalendarFrame.class.getDeclaredField("monthPanel");
+        monthPanelField.setAccessible(true);
+        JPanel monthPanel = (JPanel) monthPanelField.get(frame);
+        for (java.awt.Component component : monthPanel.getComponents()) {
+          if (component instanceof JButton) {
+            JButton button = (JButton) component;
+            if ("5".equals(button.getText())) {
+              target[0] = button;
+              break;
+            }
+          }
         }
+      } catch (IllegalAccessException | NoSuchFieldException e) {
+        throw new IllegalStateException(e);
       }
-    }
+    });
 
-    if (target == null) {
+    if (target[0] == null) {
       throw new IllegalStateException("Expected day button not found");
     }
 
-    SwingUtilities.invokeAndWait(target::doClick);
+    SwingUtilities.invokeAndWait(target[0]::doClick);
     assertEquals(LocalDate.of(2023, 11, 5), features.selected);
   }
 }
