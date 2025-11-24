@@ -176,27 +176,6 @@ public class GuiController implements GuiFeatures {
   }
 
   @Override
-  public void copyEvent(EventReference reference, String targetCalendar,
-                        LocalDateTime targetStart) {
-    calendarBook.copyEvent(activeCalendar, targetCalendar, reference.getStart(),
-        reference.getSubject(), targetStart);
-    refresh();
-  }
-
-  @Override
-  public void copyEventsOn(LocalDate sourceDate, String targetCalendar, LocalDate targetDate) {
-    calendarBook.copyEventsOnDate(activeCalendar, targetCalendar, sourceDate, targetDate);
-    refresh();
-  }
-
-  @Override
-  public void copyEventsBetween(LocalDate start, LocalDate end, String targetCalendar,
-                                LocalDate targetStart) {
-    calendarBook.copyEventsBetween(activeCalendar, targetCalendar, start, end, targetStart);
-    refresh();
-  }
-
-  @Override
   public void exportCalendar(String filePath) {
     Calendar cal = requireActiveCalendar();
     if (cal == null) {

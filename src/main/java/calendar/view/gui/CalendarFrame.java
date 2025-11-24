@@ -152,15 +152,6 @@ public class CalendarFrame extends JFrame implements GuiView {
     JButton edit = new JButton("Edit");
     edit.addActionListener(e -> promptEditEvent());
     buttons.add(edit);
-    JButton copyEvent = new JButton("Copy Event");
-    copyEvent.addActionListener(e -> promptCopyEvent());
-    buttons.add(copyEvent);
-    JButton copyDay = new JButton("Copy Day");
-    copyDay.addActionListener(e -> promptCopyDay());
-    buttons.add(copyDay);
-    JButton copyRange = new JButton("Copy Range");
-    copyRange.addActionListener(e -> promptCopyRange());
-    buttons.add(copyRange);
     wrapper.add(buttons, BorderLayout.SOUTH);
     wrapper.setPreferredSize(new Dimension(420, 700));
     add(wrapper, BorderLayout.EAST);
@@ -368,77 +359,6 @@ public class CalendarFrame extends JFrame implements GuiView {
     }
     try {
       features.editEvent(ref, result.update, result.scope);
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptCopyEvent() {
-    EventViewModel selected = eventList.getSelectedValue();
-    if (selected == null) {
-      showError("Select an event to copy");
-      return;
-    }
-    String targetCal = JOptionPane.showInputDialog(this, "Target calendar name:");
-    if (targetCal == null || targetCal.isBlank()) {
-      return;
-    }
-    String when = JOptionPane.showInputDialog(this, "Target start (yyyy-MM-ddTHH:mm):");
-    if (when == null || when.isBlank()) {
-      return;
-    }
-    try {
-      LocalDateTime targetStart = LocalDateTime.parse(when.trim());
-      features.copyEvent(new EventReference(selected.getSubject(), selected.getStart()),
-          targetCal.trim(), targetStart);
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptCopyDay() {
-    if (currentState == null) {
-      return;
-    }
-    String targetCal = JOptionPane.showInputDialog(this, "Target calendar name:");
-    if (targetCal == null || targetCal.isBlank()) {
-      return;
-    }
-    String date = JOptionPane.showInputDialog(this, "Target date (yyyy-MM-dd):");
-    if (date == null || date.isBlank()) {
-      return;
-    }
-    try {
-      features.copyEventsOn(currentState.getSelectedDate(), targetCal.trim(),
-          LocalDate.parse(date.trim()));
-    } catch (Exception ex) {
-      showError(ex.getMessage());
-    }
-  }
-
-  private void promptCopyRange() {
-    if (currentState == null) {
-      return;
-    }
-    String start = JOptionPane.showInputDialog(this, "Start date (yyyy-MM-dd):");
-    if (start == null || start.isBlank()) {
-      return;
-    }
-    String end = JOptionPane.showInputDialog(this, "End date (yyyy-MM-dd):");
-    if (end == null || end.isBlank()) {
-      return;
-    }
-    String targetCal = JOptionPane.showInputDialog(this, "Target calendar name:");
-    if (targetCal == null || targetCal.isBlank()) {
-      return;
-    }
-    String targetStart = JOptionPane.showInputDialog(this, "Target start date (yyyy-MM-dd):");
-    if (targetStart == null || targetStart.isBlank()) {
-      return;
-    }
-    try {
-      features.copyEventsBetween(LocalDate.parse(start.trim()), LocalDate.parse(end.trim()),
-          targetCal.trim(), LocalDate.parse(targetStart.trim()));
     } catch (Exception ex) {
       showError(ex.getMessage());
     }

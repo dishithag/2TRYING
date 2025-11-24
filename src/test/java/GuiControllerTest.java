@@ -87,7 +87,7 @@ public class GuiControllerTest {
   }
 
   @Test
-  public void testCopyExportCalls() {
+  public void testExportCalls() {
     StubView view = new StubView();
     CalendarBookImpl book = new CalendarBookImpl();
     GuiController controller = new GuiController(book, view, ZoneId.of("UTC"));
@@ -97,11 +97,6 @@ public class GuiControllerTest {
         LocalTime.of(11, 0), LocalTime.of(12, 0), true, null, null,
         EventInput.RecurrenceRule.none());
     controller.createEvent(input);
-    controller.copyEvent(new EventReference("Demo", LocalDateTime.of(2024, 3, 5, 11, 0)),
-        "Work", LocalDateTime.of(2024, 3, 6, 11, 0));
-    controller.copyEventsOn(LocalDate.of(2024, 3, 5), "Work", LocalDate.of(2024, 3, 7));
-    controller.copyEventsBetween(LocalDate.of(2024, 3, 5), LocalDate.of(2024, 3, 5),
-        "Work", LocalDate.of(2024, 3, 8));
     controller.exportCalendar("build/test-export.ics");
     assertTrue(view.lastMessage == null || view.lastMessage.contains("Exported"));
   }

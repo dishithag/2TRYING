@@ -46,17 +46,11 @@ exit
   - Recurring events: choose weekdays plus either number of occurrences or an end date.
 - **Edit events**:
   - Select an event in the list, click **Edit**, choose which property to change and the scope (single event, this-and-forward, or entire series), then apply.
-- **Copy events**:
-  - Click **Copy Event** to copy the selected event to another calendar/date/time.
-  - Use **Copy Day** to copy all events on the selected date, or **Copy Range** to copy an interval; times are converted to the target calendar’s timezone.
-- **Error handling**: Dialogs explain missing fields, bad times, unsupported timezones, or conflicts. Stack traces are never shown.
-
-## Spec alignment notes
-- The GUI includes copy actions (event/day/range) even though the GUI-specific brief emphasizes creation and editing; copy support remains available to match the broader multi-calendar requirements and headless/interactive command set.
+  - **Error handling**: Dialogs explain missing fields, bad times, unsupported timezones, or conflicts. Stack traces are never shown.
 
 ## Headless scripts
-- Scripts must contain one command per line and end with `exit`.
-- File extension determines export format automatically when using `export cal <filename>` (e.g., `.csv` or `.ical`).
+  - Scripts must contain one command per line and end with `exit`.
+  - File extension determines export format automatically when using `export cal <filename>` (e.g., `.csv` or `.ical`).
 
 ## Troubleshooting
 - If a mode argument is incorrect, the program prints an error and exits.

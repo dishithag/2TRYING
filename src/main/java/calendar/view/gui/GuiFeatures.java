@@ -2,7 +2,6 @@ package calendar.view.gui;
 
 import calendar.controller.EditScope;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 
@@ -74,35 +73,6 @@ public interface GuiFeatures {
    * @param scope edit scope
    */
   void editEvent(EventReference reference, EventUpdate update, EditScope scope);
-
-  /**
-   * Copies a single event to a target calendar and start time.
-   *
-   * @param reference event identifier in the active calendar
-   * @param targetCalendar destination calendar
-   * @param targetStart start date-time in the destination calendar
-   */
-  void copyEvent(EventReference reference, String targetCalendar, LocalDateTime targetStart);
-
-  /**
-   * Copies all events on the given date to the target calendar date.
-   *
-   * @param sourceDate source date in the active calendar
-   * @param targetCalendar destination calendar name
-   * @param targetDate target date in the destination calendar
-   */
-  void copyEventsOn(LocalDate sourceDate, String targetCalendar, LocalDate targetDate);
-
-  /**
-   * Copies all events within the date range to a target calendar range anchored at the start.
-   *
-   * @param start inclusive start
-   * @param end inclusive end
-   * @param targetCalendar destination calendar name
-   * @param targetStart first day of the destination range
-   */
-  void copyEventsBetween(LocalDate start, LocalDate end, String targetCalendar,
-                         LocalDate targetStart);
 
   /**
    * Exports the active calendar to the given file path.
