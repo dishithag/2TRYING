@@ -395,27 +395,36 @@ public class CalendarFrame extends JFrame implements GuiView {
     panel.add(new JLabel("Visibility"));
     panel.add(visibility);
 
-    JTextField weekdaysField = new JTextField();
-    panel.add(new JLabel("Recurrence weekdays (e.g., MTWRFSU)"));
-    panel.add(weekdaysField);
-
     JComboBox<String> recurrenceChoice = new JComboBox<>(
         new String[] {"None", "Repeat for N times", "Repeat until date"});
     panel.add(new JLabel("Recurrence"));
     panel.add(recurrenceChoice);
 
+    JLabel weekdaysLabel = new JLabel("Recurrence weekdays (e.g., MTWRFSU)");
+    JTextField weekdaysField = new JTextField();
+    panel.add(weekdaysLabel);
+    panel.add(weekdaysField);
+
+    JLabel countLabel = new JLabel("Occurrences (for N times)");
     JTextField countField = new JTextField();
-    panel.add(new JLabel("Occurrences (for N times)"));
+    panel.add(countLabel);
     panel.add(countField);
 
+    JLabel untilLabel = new JLabel("Until date");
     JComboBox<String> untilYear = buildYearCombo();
     JComboBox<String> untilMonth = buildMonthCombo();
     JComboBox<String> untilDay = buildDayCombo();
     attachUntilListeners(untilYear, untilMonth, untilDay);
-    panel.add(new JLabel("Until date"));
+    panel.add(untilLabel);
     panel.add(untilYear);
     panel.add(untilMonth);
     panel.add(untilDay);
+
+    updateRecurrenceVisibility((String) recurrenceChoice.getSelectedItem(), weekdaysLabel,
+        weekdaysField, countLabel, countField, untilLabel, untilYear, untilMonth, untilDay);
+    recurrenceChoice.addItemListener(evt -> updateRecurrenceVisibility(
+        (String) recurrenceChoice.getSelectedItem(), weekdaysLabel, weekdaysField, countLabel,
+        countField, untilLabel, untilYear, untilMonth, untilDay));
 
     while (true) {
       int result = JOptionPane.showConfirmDialog(this, panel, "Create Event",
@@ -438,11 +447,12 @@ public class CalendarFrame extends JFrame implements GuiView {
         continue;
       }
 
-      LocalDate untilDate = parseUntilDate(untilYear, untilMonth, untilDay);
+      String recurrenceSelection = (String) recurrenceChoice.getSelectedItem();
+      LocalDate untilDate = "Repeat until date".equals(recurrenceSelection)
+          ? parseUntilDate(untilYear, untilMonth, untilDay) : null;
 
-      EventInput.RecurrenceRule rule = parseRecurrence(
-          (String) recurrenceChoice.getSelectedItem(), weekdaysField.getText(),
-          countField.getText(), untilDate);
+      EventInput.RecurrenceRule rule = parseRecurrence(recurrenceSelection,
+          weekdaysField.getText(), countField.getText(), untilDate);
       if (rule == null) {
         continue;
       }
@@ -473,21 +483,23 @@ public class CalendarFrame extends JFrame implements GuiView {
 
   private EventInput.RecurrenceRule parseRecurrence(String choice, String weekdays,
       String count, LocalDate until) {
+    String trimmedWeekdays = weekdays.trim();
+    String trimmedCount = count.trim();
     if (choice == null || "None".equals(choice)) {
-      if (!weekdays.trim().isEmpty() || !count.trim().isEmpty() || until != null) {
+      if (!trimmedWeekdays.isEmpty() || !trimmedCount.isEmpty() || until != null) {
         showError("Leave recurrence fields blank or choose a recurrence option");
         return null;
       }
       return EventInput.RecurrenceRule.none();
     }
-    Set<DayOfWeek> weekdaySet = parseWeekdays(weekdays);
+    Set<DayOfWeek> weekdaySet = parseWeekdays(trimmedWeekdays);
     if (weekdaySet.isEmpty()) {
       showError("Specify weekdays for recurrence");
       return null;
     }
     if ("Repeat for N times".equals(choice)) {
       try {
-        int occurrences = Integer.parseInt(count.trim());
+        int occurrences = Integer.parseInt(trimmedCount);
         if (occurrences <= 0) {
           showError("Occurrences must be positive");
           return null;
@@ -503,6 +515,38 @@ public class CalendarFrame extends JFrame implements GuiView {
       return null;
     }
     return EventInput.RecurrenceRule.untilDate(weekdaySet, until);
+  }
+
+  private void updateRecurrenceVisibility(String choice, JLabel weekdaysLabel,
+      JTextField weekdaysField, JLabel countLabel, JTextField countField, JLabel untilLabel,
+      JComboBox<String> untilYear, JComboBox<String> untilMonth, JComboBox<String> untilDay) {
+    boolean none = choice == null || "None".equals(choice);
+    boolean forCount = "Repeat for N times".equals(choice);
+    boolean until = "Repeat until date".equals(choice);
+
+    weekdaysLabel.setVisible(!none);
+    weekdaysField.setVisible(!none);
+    weekdaysField.setEnabled(!none);
+
+    countLabel.setVisible(forCount);
+    countField.setVisible(forCount);
+    countField.setEnabled(forCount);
+
+    untilLabel.setVisible(until);
+    untilYear.setVisible(until);
+    untilMonth.setVisible(until);
+    untilDay.setVisible(until);
+    untilYear.setEnabled(until);
+    untilMonth.setEnabled(until);
+    untilDay.setEnabled(until);
+
+    if (none) {
+      weekdaysField.setText("");
+      countField.setText("");
+      untilYear.setSelectedIndex(0);
+      untilMonth.setSelectedIndex(0);
+      untilDay.setSelectedIndex(0);
+    }
   }
 
   private JLabel requiredLabel(String text) {
