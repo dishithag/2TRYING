@@ -9,6 +9,7 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -749,6 +750,8 @@ public class CalendarFrame extends JFrame implements GuiView {
           return null;
         }
         List<EventUpdate> updates = new ArrayList<>();
+        LocalDateTime newStartValue = null;
+        boolean endSelected = false;
         if (subjectBox.isSelected()) {
           String subject = subjectField.getText().trim();
           if (subject.isEmpty()) {
@@ -762,14 +765,21 @@ public class CalendarFrame extends JFrame implements GuiView {
           if (start == null) {
             continue;
           }
+          newStartValue = start;
           updates.add(new EventUpdate(EventProperty.START, start, null));
         }
         if (endBox.isSelected()) {
+          endSelected = true;
           LocalDateTime end = parseEditDateTime(endDateField.getText(), endTimeField);
           if (end == null) {
             continue;
           }
           updates.add(new EventUpdate(EventProperty.END, end, null));
+        }
+        if (newStartValue != null && !endSelected) {
+          Duration duration = Duration.between(selected.getStart(), selected.getEnd());
+          LocalDateTime adjustedEnd = newStartValue.plus(duration);
+          updates.add(new EventUpdate(EventProperty.END, adjustedEnd, null));
         }
         if (descriptionBox.isSelected()) {
           updates.add(new EventUpdate(EventProperty.DESCRIPTION, null,
