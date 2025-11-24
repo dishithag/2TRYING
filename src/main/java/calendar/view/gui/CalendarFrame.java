@@ -365,7 +365,9 @@ public class CalendarFrame extends JFrame implements GuiView {
 
   private EventInput gatherEventInput(LocalDate date) {
     JComboBox<String> startCombo = new JComboBox<>(timeOptions());
+    startCombo.setEditable(true);
     JComboBox<String> endCombo = new JComboBox<>(timeOptions());
+    endCombo.setEditable(true);
     JLabel subjectLabel = requiredLabel("Subject");
     JTextField subjectField = new JTextField();
     JLabel startLabel = requiredLabel("Start time");
@@ -441,7 +443,11 @@ public class CalendarFrame extends JFrame implements GuiView {
       return null;
     }
     try {
-      return LocalTime.parse(value);
+      String trimmed = value.trim();
+      if (trimmed.isEmpty()) {
+        return null;
+      }
+      return LocalTime.parse(trimmed);
     } catch (DateTimeParseException e) {
       showError("Time must be HH:mm");
       return null;

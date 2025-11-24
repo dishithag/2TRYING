@@ -42,6 +42,7 @@ exit
   - The right panel updates with events for the selected day in the active calendar’s timezone.
 - **Create an event**:
   - Click **Create Event**; subject is required. Start/end default to the selected day.
+  - Time pickers offer common 30-minute slots but are editable—type any `HH:mm` (e.g., `01:45`) or leave both blank for an all-day event.
   - Optional fields: description, location, status (public/private).
   - Recurring events: choose weekdays plus either number of occurrences or an end date.
 - **Edit events**:
