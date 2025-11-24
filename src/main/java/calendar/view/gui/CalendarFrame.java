@@ -6,6 +6,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -152,6 +154,17 @@ public class CalendarFrame extends JFrame implements GuiView {
     selectedDateLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     wrapper.add(selectedDateLabel, BorderLayout.NORTH);
     wrapper.add(new JScrollPane(eventList), BorderLayout.CENTER);
+    eventList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          EventViewModel selected = eventList.getSelectedValue();
+          if (selected != null && currentState != null) {
+            showEventDetails(selected, currentState.getActiveZone());
+          }
+        }
+      }
+    });
 
     final JPanel buttons = new JPanel();
     JButton create = new JButton("Create Event");
@@ -241,8 +254,40 @@ public class CalendarFrame extends JFrame implements GuiView {
       if (isSelected) {
         label.setBackground(new Color(220, 235, 250));
       }
+      label.setToolTipText(buildTooltip(value, state.getActiveZone()));
       return label;
     });
+  }
+
+  private String buildTooltip(EventViewModel vm, ZoneId zone) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html><b>").append(vm.getSubject()).append("</b><br>");
+    sb.append(vm.getStart().atZone(zone).toLocalTime()).append("-")
+        .append(vm.getEnd().atZone(zone).toLocalTime());
+    vm.getLocation().ifPresent(loc -> sb.append(" @ ").append(loc));
+    if (!vm.isPublicEvent()) {
+      sb.append(" (private)");
+    }
+    if (vm.isSeriesPart()) {
+      sb.append(" [series]");
+    }
+    vm.getDescription().ifPresent(desc -> sb.append("<br>Description: ").append(desc));
+    sb.append("</html>");
+    return sb.toString();
+  }
+
+  private void showEventDetails(EventViewModel vm, ZoneId zone) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Subject: ").append(vm.getSubject()).append("\n");
+    sb.append("When: ").append(vm.getStart().atZone(zone)).append(" to ")
+        .append(vm.getEnd().atZone(zone)).append("\n");
+    vm.getLocation().ifPresent(loc -> sb.append("Location: ").append(loc).append("\n"));
+    vm.getDescription().ifPresent(desc -> sb.append("Description: ").append(desc).append("\n"));
+    sb.append("Visibility: ").append(vm.isPublicEvent() ? "public" : "private");
+    if (vm.isSeriesPart()) {
+      sb.append("\nPart of a series");
+    }
+    showMessage(sb.toString());
   }
 
   private void navigateMonth(int delta) {
