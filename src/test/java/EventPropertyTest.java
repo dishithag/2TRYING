@@ -36,7 +36,8 @@ public class EventPropertyTest {
   public void testApply_start_returnsSameBuilder() {
     EventBuilder builder = new EventBuilder()
         .subject("Test")
-        .startDateTime(LocalDateTime.of(2025, 11, 10, 9, 0));
+        .startDateTime(LocalDateTime.of(2025, 11, 10, 9, 0))
+        .endDateTime(LocalDateTime.of(2025, 11, 10, 12, 0));
 
     EventBuilder result = EventProperty.START.apply(builder, "2025-11-10T10:00");
 

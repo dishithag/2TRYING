@@ -108,7 +108,8 @@ public class EventBuilder {
 
   /**
    * Builds the {@link Event}.
-   * Defaults the end time to {@link WorkingHours#END} on the start date when no end is provided.
+   * Defaults missing times to an all-day span using {@link WorkingHours#START} and
+   * {@link WorkingHours#END} on the start date when no end is provided.
    *
    * @return a new {@link Event}
    * @throws IllegalArgumentException if required fields are missing or invalid
@@ -121,15 +122,20 @@ public class EventBuilder {
       throw new IllegalArgumentException("Start date/time required");
     }
 
-    LocalDateTime finalEnd = (end == null)
-        ? start.toLocalDate().atTime(WorkingHours.END)
-        : end;
+    LocalDateTime finalStart = start;
+    LocalDateTime finalEnd = end;
+    if (end == null) {
+      LocalDate date = start.toLocalDate();
+      finalStart = date.atTime(WorkingHours.START);
+      finalEnd = date.atTime(WorkingHours.END);
+    }
 
-    if (finalEnd.isBefore(start)) {
+    if (finalEnd.isBefore(finalStart)) {
       throw new IllegalArgumentException("End date/time before start");
     }
 
-    return new SingleEvent(subject, start, finalEnd, description, location, isPublic, seriesId);
+    return new SingleEvent(subject, finalStart, finalEnd,
+        description, location, isPublic, seriesId);
   }
 
   /**
